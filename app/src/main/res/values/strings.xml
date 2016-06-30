@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Bubble Count</string>
+
+    <string name="button_play">Play</string>
+    <string name="button_settings">Settings</string>
+
+</resources>
