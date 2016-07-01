@@ -6,18 +6,24 @@ import android.util.AttributeSet;
 import android.widget.Button;
 
 import ca.chrisbarrett.bubblecount.R;
-import ca.chrisbarrett.bubblecount.view.utilities.BubbleFont;
+import ca.chrisbarrett.bubblecount.utilities.BubbleFontCache;
 
 /**
- * Generates a custom Button using the
- * Created by chrisbarrett on 2016-06-29.
+ * Generates a custom {@link android.widget.Button}, using the TypeFace font defined by {@link
+ * BubbleFontCache#getFont(Context)}. Color will be set to the "colorPrimary" value defined in
+ * the color XML file. The button background will be set to the "buttonBackground"value defined in
+ * the color XML file.
+ *
+ * @author Chris Barrett
+ * @see android.view.SurfaceView;
+ * @since Jun 26, 2016
  */
 public class BubbleButton extends Button {
 
     public BubbleButton(Context context, AttributeSet attrs) {
         super(context, attrs);
-        setBackgroundColor(ContextCompat.getColor(context, R.color.transparent));
+        setBackgroundColor(ContextCompat.getColor(context, R.color.buttonBackground));
         setTextColor(ContextCompat.getColor(context, R.color.colorPrimary));
-        setTypeface(BubbleFont.getFont(context));
+        setTypeface(BubbleFontCache.getFont(context));
     }
 }
