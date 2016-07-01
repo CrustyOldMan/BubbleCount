@@ -3,8 +3,7 @@
     <color name="colorPrimary">#FFF</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorBackground">#000</color>
 
-    <color name="transparent">@android:color/transparent</color>
-    <color name="background">#000</color>
-
+    <color name="buttonBackground">@android:color/transparent</color>
 </resources>
