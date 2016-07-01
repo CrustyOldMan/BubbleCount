@@ -5,7 +5,14 @@ import android.support.v7.app.AppCompatActivity;
 
 import ca.chrisbarrett.bubblecount.view.GameView;
 
-public class GameActivity extends AppCompatActivity  {
+/**
+ * A helper Activity that starts and stops the {@link ca.chrisbarrett.bubblecount.view.GameView;}
+ *
+ * @author Chris Barrett
+ * @see android.support.v7.app.AppCompatActivity
+ * @since Jun 26, 2016
+ */
+public class GameActivity extends AppCompatActivity {
 
     private GameView gameView;
 
