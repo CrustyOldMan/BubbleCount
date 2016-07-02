@@ -16,7 +16,7 @@ public class BubbleSprite implements Sprite {
     private String text;
 
     /**
-     * Default constructor
+     * Constructor to generate a BubbleSprite without text
      *
      * @param x      the X coordinate center of the BubbleSprite
      * @param y      the Y coordinate center of the BubbleSprite
@@ -27,7 +27,7 @@ public class BubbleSprite implements Sprite {
     }
 
     /**
-     * Default constructor
+     * Constructor generates a BubbleSprite with text
      *
      * @param x      the X coordinate center of the BubbleSprite
      * @param y      the Y coordinate center of the BubbleSprite
@@ -98,13 +98,14 @@ public class BubbleSprite implements Sprite {
     }
 
     @Override
-    public boolean isTouched(float x, float y) {
-        return isOverlap(x, y, radius);
+    public boolean isCollision(float x, float y) {
+        return isCollision(x, y, radius);
     }
 
     @Override
     public boolean isCollision(Sprite sprite) {
-        return sprite != null && isOverlap(sprite.getX(), sprite.getY(), radius * 2);
+        return sprite != null && sprite instanceof BubbleSprite && isCollision(sprite.getX(),
+                sprite.getY(), radius * 2);
     }
 
     @Override
@@ -112,16 +113,8 @@ public class BubbleSprite implements Sprite {
 
     }
 
-    /**
-     * Helper method to determine if the trigger is inside or outside of the BubbleSprite
-     *
-     * @param x        the X coordinate of the trigger
-     * @param y        the Y coordinate of the trigger
-     * @param distance the maximum distance allowed between the X,Y of the trigger and the X,Y of
-     *                 the BubbleSprite
-     * @return true if there is an overlap, false if not
-     */
-    protected boolean isOverlap(float x, float y, float distance) {
+    @Override
+    public boolean isCollision(float x, float y, float distance) {
         double spread = Math.sqrt((this.x - x) * (this.x - x) +
                 ((this.y - y) * (this.y - y)));
         return spread <= distance;

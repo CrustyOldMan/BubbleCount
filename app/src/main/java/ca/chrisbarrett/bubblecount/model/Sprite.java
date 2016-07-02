@@ -87,13 +87,24 @@ public interface Sprite {
     boolean isCollision(Sprite sprite);
 
     /**
-     * Checks to see if the user has touched the Sprite
+     * Checks to see if the Sprite has collided with a specific point at a specific distance
      *
      * @param x the X coordinate of the touch
      * @param y the Y coordinate of the touch
      * @return true if the Sprite has been touched, false if it has not been touched
      */
-    boolean isTouched(float x, float y);
+    boolean isCollision(float x, float y);
+
+    /**
+     * Checks to see if the Sprite has collided with a specific point at a specific distance
+     *
+     * @param x        the X coordinate of the point
+     * @param y        the Y coordinate of the point
+     * @param distance the maximum distance allowed between the X,Y of the point and the X,Y of
+     *                 the BubbleSprite
+     * @return true if there is an overlap, false if not
+     */
+    boolean isCollision(float x, float y, float distance);
 
     /**
      * Updates the Sprite, such as with motion. Usually called prior to a draw event.
