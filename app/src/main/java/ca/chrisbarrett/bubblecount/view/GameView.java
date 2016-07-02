@@ -16,10 +16,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
+import ca.chrisbarrett.bubblecount.game.CountGameEngine;
+import ca.chrisbarrett.bubblecount.game.GameEngine;
 import ca.chrisbarrett.bubblecount.model.BubbleSprite;
 import ca.chrisbarrett.bubblecount.model.Sprite;
 import ca.chrisbarrett.bubblecount.utilities.BubbleFontCache;
 import ca.chrisbarrett.bubblecount.utilities.PaintCache;
+import ca.chrisbarrett.bubblecount.utilities.TextFormat;
 
 /**
  * The View for the Game, extending {@link  android.view.SurfaceView}. This View will run on a
@@ -30,7 +33,7 @@ import ca.chrisbarrett.bubblecount.utilities.PaintCache;
  * Sprite area of the screen. The actual implementation, however, maybe less if the available
  * screen dimensions are to hold all the Sprites.</li>
  * <li>{@link GameView#VERTICAL_DIVIDE_RATIO} defines the ratio between the Sprite area and the
- * Text area. Text are is used to hold a question, or statement to be displayed to the player -
+ * Text area. Text area is used to hold a question, or statement to be displayed to the player -
  * such as "1 + 1 = ?" or "1, 2, 3, ?" </li>
  * </ol>
  *
@@ -43,8 +46,9 @@ public class GameView extends SurfaceView implements Runnable {
     public static final float VERTICAL_DIVIDE_RATIO = 0.8f;
     public static final int BACKGROUND_COLOR = Color.BLACK;
 
-    public static final int SPRITE_COUNT = 10;
     public static final int BUBBLE_RADIUS = 100;
+    public static final int SPRITE_COUNT = 30;
+    public static final int SPRITE_PLACEMENT_ATTEMPTS = 5;
 
     private static final String TAG = "GameView";
     private Thread gameThread = null;
@@ -59,6 +63,8 @@ public class GameView extends SurfaceView implements Runnable {
     private List<Sprite> sprites = new ArrayList<>(SPRITE_COUNT);
     private boolean isPlaying;
     private int roundCount;
+    private int answer;
+    private String question;
 
     /**
      * Default constructor when inflating from programmatically
@@ -120,8 +126,8 @@ public class GameView extends SurfaceView implements Runnable {
         gameHeight = metrics.heightPixels * VERTICAL_DIVIDE_RATIO;
         textHeight = metrics.heightPixels - gameHeight;
         screenWidth = metrics.widthPixels;
-        isPlaying = true;
         prepareRound();
+        isPlaying = true;
         gameThread = new Thread(this);
         gameThread.start();
     }
@@ -137,38 +143,6 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
-    /**
-     * Setups up the round in the background while the Round Dialogue is being displayed.
-     * Positions the {@value GameView#SPRITE_COUNT} Sprites randomly in the defined area for
-     * Sprites.
-     * <p/>
-     * Brute force is used to make sure the Sprites do not overlap. 10 attempts to place
-     * the Sprite without overlap will be tried. On the 11th attempt, the Sprite will be skipped
-     * over.
-     * TODO - ASynch this method
-     */
-    protected void prepareRound() {
-        Random rand = new Random();
-        boolean overlap;
-        Sprite bubble;
-        for (int i = 0; i < SPRITE_COUNT; i++) {
-            int attemptCount = 0;
-            do {
-                attemptCount++;
-                overlap = false;
-                bubble = new BubbleSprite(
-                        rand.nextInt(((int) screenWidth - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS,
-                        rand.nextInt(((int) gameHeight - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS,
-                        BUBBLE_RADIUS, "" + (i + 1));  //TODO add a real value to the text of the bubble
-                for (Sprite sprite : sprites) {
-                    if (bubble.isCollision(sprite)) {
-                        overlap = true;
-                    }
-                }
-            } while (overlap && attemptCount <= 10);
-            sprites.add(bubble);
-        }
-    }
 
     /**
      * Updates the drawables
@@ -190,12 +164,15 @@ public class GameView extends SurfaceView implements Runnable {
             canvas = surfaceHolder.lockCanvas();
             canvas.drawColor(BACKGROUND_COLOR);
             canvas.drawLine(0, gameHeight, screenWidth, gameHeight, drawPaint);
-            canvas.drawText("Placeholder", screenWidth / 2, (textHeight / 2) + gameHeight, textPaint);
+            canvas.drawText(question, screenWidth / 2f, TextFormat
+                    .verticalCenter(gameHeight, textHeight + gameHeight-50, textPaint), textPaint);
 
             for (Sprite sprite : sprites) {
                 if (sprite.isVisible()) {
                     canvas.drawCircle(sprite.getX(), sprite.getY(), sprite.getRadius(), drawPaint);
-                    canvas.drawText(sprite.getText(), sprite.getX(), sprite.getY(), textPaint);
+                    canvas.drawText(sprite.getText(), sprite.getX(), TextFormat
+                            .verticalCenter(sprite.getY() - BUBBLE_RADIUS,
+                                    sprite.getY() + BUBBLE_RADIUS, textPaint), textPaint);
                 }
             }
             surfaceHolder.unlockCanvasAndPost(canvas);
@@ -207,11 +184,58 @@ public class GameView extends SurfaceView implements Runnable {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 for (Sprite sprite : sprites) {
-                    if (sprite.isTouched(event.getX(), event.getY())) {
+                    if (sprite.isCollision(event.getX(), event.getY())) {
                         sprite.setVisible(false);
                     }
                 }
         }
         return super.onTouchEvent(event);
+    }
+
+    /**
+     * Setups up the round in the background while the Round Dialogue is being displayed.
+     * Positions the {@value GameView#SPRITE_COUNT} Sprites randomly in the defined area for
+     * Sprites.
+     * <p/>
+     * Brute force is used to make sure the Sprites do not overlap. {@value GameView#SPRITE_PLACEMENT_ATTEMPTS}
+     * attempts to  place the Sprite without overlap will be tried. On the 11th attempt, the
+     * Sprite will be skipped over.
+     * TODO - ASynchTask this method
+     */
+    protected void prepareRound() {
+        Random rand = new Random();
+        GameEngine gameEngine = new CountGameEngine();
+        question = gameEngine.getQuestion();
+        answer = gameEngine.getAnswer();
+        sprites.add(new BubbleSprite(
+                rand.nextInt(((int) screenWidth - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS,
+                rand.nextInt(((int) gameHeight - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS,
+                BUBBLE_RADIUS, "" + answer));
+        int x = 0;
+        int y = 0;
+        boolean overlap;
+        for (int i = 0; i < SPRITE_COUNT - 1; i++) {
+            int attemptCount = 0;
+            do {
+                // don't duplicate the correct answer bubble
+                if (answer == i + 1) {
+                    attemptCount = SPRITE_PLACEMENT_ATTEMPTS + 1;
+                    break;
+                }
+                attemptCount++;
+                overlap = false;
+                x = rand.nextInt(((int) screenWidth - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS;
+                y = rand.nextInt(((int) gameHeight - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS;
+                for (Sprite sprite : sprites) {
+                    if (sprite.isCollision(x, y, BUBBLE_RADIUS * 2)) {
+                        overlap = true;
+                        break;
+                    }
+                }
+            } while (overlap && attemptCount <= SPRITE_PLACEMENT_ATTEMPTS);
+            if (attemptCount <= SPRITE_PLACEMENT_ATTEMPTS) {
+                sprites.add(new BubbleSprite(x, y, BUBBLE_RADIUS, "" + (i + 1)));
+            }
+        }
     }
 }
