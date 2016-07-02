@@ -4,8 +4,8 @@ import android.content.Context;
 import android.graphics.Typeface;
 
 /**
- * Utility class that initializes the Bubble & Soap Typeface statically. This is faster than initializes
- * the Typeface on every call.
+ * Utility class that initializes the Bubble & Soap Typeface statically. This is faster than
+ * initializing the Typeface on every call.
  *
  * @author Chris Barrett
  * @see android.graphics.Typeface;

@@ -4,7 +4,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 
 /**
- * Utility class that initializes the Paint objects statically. This is faster than initializes
+ * Utility class that initializes the Paint objects statically. This is faster than initializing
  * the Paints on every call. Paints operate as the brush when drawing on a Canvas object
  *
  * @author Chris Barrett
