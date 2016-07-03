@@ -1,5 +1,9 @@
 package ca.chrisbarrett.bubblecount.model;
 
+import android.graphics.Bitmap;
+import android.graphics.Rect;
+import android.graphics.RectF;
+
 /**
  * All drawable sprites must implement
  *
@@ -105,6 +109,48 @@ public interface Sprite {
      * @return true if there is an overlap, false if not
      */
     boolean isCollision(float x, float y, float distance);
+
+    /**
+     * Gets the exploding state of the sprite
+     *
+     * @return true if the sprite has exploded
+     */
+    boolean isExplode();
+
+    /**
+     * Sets the exploding state of the sprite
+     *
+     * @param isExplode true if exploding, false if not
+     */
+    void setExplode(boolean isExplode);
+
+    /**
+     * Gets the rectangle dimensions of the portion of the sprite image to display
+     *
+     * @return a Rect object
+     */
+    Rect getWhatToDraw();
+
+    /**
+     * Gets the rectangle dimensions of where to draw the image
+     *
+     * @return a Rect object
+     */
+    RectF getWhereToDraw();
+
+    /**
+     * Gets the sprite image
+     *
+     * @return the Bitmap of the sprite
+     */
+    Bitmap getSpriteImage();
+
+    /**
+     * Sets the sprite image
+     *
+     * @param spriteImage the Bitmap of the sprite
+     */
+    void setSpriteImage(Bitmap spriteImage);
 
     /**
      * Updates the Sprite, such as with motion. Usually called prior to a draw event.
