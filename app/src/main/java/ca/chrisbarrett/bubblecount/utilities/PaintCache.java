@@ -15,7 +15,7 @@ public class PaintCache {
 
     public static final int DEFAULT_COLOR = Color.WHITE;
     public static final int DEFAULT_LINE_THICKNESS = 2;
-    public static final int DEFAULT_TEXT_SIZE = 120;
+    public static final int DEFAULT_TEXT_SIZE = 100;
 
     private static Paint textPaint;
     private static Paint drawPaint;
