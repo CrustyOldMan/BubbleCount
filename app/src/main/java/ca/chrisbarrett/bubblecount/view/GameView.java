@@ -1,9 +1,11 @@
 package ca.chrisbarrett.bubblecount.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -21,6 +23,7 @@ import ca.chrisbarrett.bubblecount.game.GameEngine;
 import ca.chrisbarrett.bubblecount.model.BubbleSprite;
 import ca.chrisbarrett.bubblecount.model.Sprite;
 import ca.chrisbarrett.bubblecount.utilities.BubbleFontCache;
+import ca.chrisbarrett.bubblecount.utilities.BubbleSpriteCache;
 import ca.chrisbarrett.bubblecount.utilities.PaintCache;
 import ca.chrisbarrett.bubblecount.utilities.TextFormat;
 
@@ -46,7 +49,6 @@ public class GameView extends SurfaceView implements Runnable {
     public static final float VERTICAL_DIVIDE_RATIO = 0.8f;
     public static final int BACKGROUND_COLOR = Color.BLACK;
 
-    public static final int BUBBLE_RADIUS = 100;
     public static final int SPRITE_COUNT = 30;
     public static final int SPRITE_PLACEMENT_ATTEMPTS = 5;
 
@@ -61,6 +63,7 @@ public class GameView extends SurfaceView implements Runnable {
     private float textHeight;
 
     private List<Sprite> sprites = new ArrayList<>(SPRITE_COUNT);
+    private Bitmap spriteImage;
     private boolean isPlaying;
     private int roundCount;
     private int answer;
@@ -98,6 +101,7 @@ public class GameView extends SurfaceView implements Runnable {
         textPaint = PaintCache.getTextPainter();
         textPaint.setTypeface(BubbleFontCache.getFont(context));
         drawPaint = PaintCache.getDrawablePainter();
+        spriteImage = BubbleSpriteCache.getSprite(context);
         roundCount = 0;
         isPlaying = true;
     }
@@ -126,7 +130,7 @@ public class GameView extends SurfaceView implements Runnable {
         gameHeight = metrics.heightPixels * VERTICAL_DIVIDE_RATIO;
         textHeight = metrics.heightPixels - gameHeight;
         screenWidth = metrics.widthPixels;
-        prepareRound();
+        new PrepareRound().execute();
         isPlaying = true;
         gameThread = new Thread(this);
         gameThread.start();
@@ -165,14 +169,20 @@ public class GameView extends SurfaceView implements Runnable {
             canvas.drawColor(BACKGROUND_COLOR);
             canvas.drawLine(0, gameHeight, screenWidth, gameHeight, drawPaint);
             canvas.drawText(question, screenWidth / 2f, TextFormat
-                    .verticalCenter(gameHeight, textHeight + gameHeight-50, textPaint), textPaint);
+                    .verticalCenter(gameHeight, textHeight + gameHeight - 50, textPaint), textPaint);
 
             for (Sprite sprite : sprites) {
                 if (sprite.isVisible()) {
-                    canvas.drawCircle(sprite.getX(), sprite.getY(), sprite.getRadius(), drawPaint);
+
+                    canvas.drawBitmap(sprite.getSpriteImage(), sprite.getX() - sprite.getRadius(), sprite
+                            .getY() - sprite.getRadius(), drawPaint);
+
+// TODO - Get the bubbles to animate using bubble_sprite2
+//                    canvas.drawBitmap(sprite.getSpriteImage(), sprite.getWhatToDraw(), sprite
+//                                    .getWhereToDraw(),   drawPaint);
                     canvas.drawText(sprite.getText(), sprite.getX(), TextFormat
-                            .verticalCenter(sprite.getY() - BUBBLE_RADIUS,
-                                    sprite.getY() + BUBBLE_RADIUS, textPaint), textPaint);
+                            .verticalCenter(sprite.getY() - BubbleSprite.RADIUS,
+                                    sprite.getY() + BubbleSprite.RADIUS, textPaint), textPaint);
                 }
             }
             surfaceHolder.unlockCanvasAndPost(canvas);
@@ -198,44 +208,51 @@ public class GameView extends SurfaceView implements Runnable {
      * Sprites.
      * <p/>
      * Brute force is used to make sure the Sprites do not overlap. {@value GameView#SPRITE_PLACEMENT_ATTEMPTS}
-     * attempts to  place the Sprite without overlap will be tried. On the 11th attempt, the
-     * Sprite will be skipped over.
-     * TODO - ASynchTask this method
+     * attempts to  place the Sprite without overlap will be tried. By keeping the attempts low,
+     * the perception of a random generation in numbers is achieved.
      */
-    protected void prepareRound() {
-        Random rand = new Random();
-        GameEngine gameEngine = new CountGameEngine();
-        question = gameEngine.getQuestion();
-        answer = gameEngine.getAnswer();
-        sprites.add(new BubbleSprite(
-                rand.nextInt(((int) screenWidth - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS,
-                rand.nextInt(((int) gameHeight - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS,
-                BUBBLE_RADIUS, "" + answer));
-        int x = 0;
-        int y = 0;
-        boolean overlap;
-        for (int i = 0; i < SPRITE_COUNT - 1; i++) {
-            int attemptCount = 0;
-            do {
-                // don't duplicate the correct answer bubble
-                if (answer == i + 1) {
-                    attemptCount = SPRITE_PLACEMENT_ATTEMPTS + 1;
-                    break;
-                }
-                attemptCount++;
-                overlap = false;
-                x = rand.nextInt(((int) screenWidth - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS;
-                y = rand.nextInt(((int) gameHeight - (BUBBLE_RADIUS * 2)) + 1) + BUBBLE_RADIUS;
-                for (Sprite sprite : sprites) {
-                    if (sprite.isCollision(x, y, BUBBLE_RADIUS * 2)) {
-                        overlap = true;
+    protected class PrepareRound extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Random rand = new Random();
+            GameEngine gameEngine = new CountGameEngine();
+            question = gameEngine.getQuestion();
+            answer = gameEngine.getAnswer();
+            sprites.add(new BubbleSprite(spriteImage,
+                    rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)
+                    ) + 1) +
+                            BubbleSprite.RADIUS,
+                    rand.nextInt(((int) gameHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS,
+                    BubbleSprite.RADIUS, "" + answer));
+            int x = 0;
+            int y = 0;
+            boolean overlap;
+            for (int i = 0; i < SPRITE_COUNT - 1; i++) {
+                int attemptCount = 0;
+                do {
+                    // don't duplicate the correct answer bubble
+                    if (answer == i + 1) {
+                        attemptCount = SPRITE_PLACEMENT_ATTEMPTS + 1;
                         break;
                     }
+                    attemptCount++;
+                    overlap = false;
+                    x = rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
+                    y = rand.nextInt(((int) gameHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
+                    for (Sprite sprite : sprites) {
+                        if (sprite.isCollision(x, y, BubbleSprite.RADIUS * 2)) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                } while (overlap && attemptCount <= SPRITE_PLACEMENT_ATTEMPTS);
+                if (attemptCount <= SPRITE_PLACEMENT_ATTEMPTS) {
+                    sprites.add(new BubbleSprite(spriteImage, x, y, BubbleSprite.RADIUS, "" + (i +
+                            1)));
                 }
-            } while (overlap && attemptCount <= SPRITE_PLACEMENT_ATTEMPTS);
-            if (attemptCount <= SPRITE_PLACEMENT_ATTEMPTS) {
-                sprites.add(new BubbleSprite(x, y, BUBBLE_RADIUS, "" + (i + 1)));
             }
+            return null;
         }
     }
 }
