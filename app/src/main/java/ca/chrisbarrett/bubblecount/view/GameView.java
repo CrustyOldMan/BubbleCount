@@ -229,8 +229,7 @@ public class GameView extends SurfaceView implements Runnable {
             Random rand = new Random();
             GameEngine gameEngine = new CountGameEngine(PLAYER_AGE_TEST);
             gameEngineAnswer = gameEngine.getAnswer();
-            gameEngineQuestion =  buildQuestion(gameEngine.getQuestion(),gameEngine.getAnswer
-                    ());
+
             sprites.add(new BubbleSprite(spriteImage,
                     rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)
                     ) + 1) + BubbleSprite.RADIUS,
