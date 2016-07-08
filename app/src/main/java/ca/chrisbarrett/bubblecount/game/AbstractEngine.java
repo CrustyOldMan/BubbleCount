@@ -13,17 +13,21 @@ import java.util.Random;
 public class AbstractEngine implements GameEngine {
 
     protected static final Random RAND = new Random();
-    protected int answer;
+    protected String answer;
     protected String question;
 
+    public AbstractEngine(String answer, String question) {
+        this.answer = answer;
+        this.question = question;
+    }
 
     @Override
-    public int getAnswer() {
+    public String getAnswer() {
         return answer;
     }
 
     @Override
-    public void setAnswer(int answer) {
+    public void setAnswer(String answer) {
         this.answer = answer;
     }
 

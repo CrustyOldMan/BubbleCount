@@ -13,8 +13,7 @@ package ca.chrisbarrett.bubblecount.game;
  */
 public class CountGameEngine extends AbstractEngine {
 
-    public CountGameEngine() {
-        answer = 10;
-        question = "7  8  9  ?";
+    public CountGameEngine(int age) {
+        super("10","7  8  9");
     }
 }

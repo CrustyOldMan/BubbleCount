@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,7 +37,7 @@ import ca.chrisbarrett.bubblecount.utilities.TextFormat;
  * Sprite area of the screen. The actual implementation, however, maybe less if the available
  * screen dimensions are to hold all the Sprites.</li>
  * <li>{@link GameView#VERTICAL_DIVIDE_RATIO} defines the ratio between the Sprite area and the
- * Text area. Text area is used to hold a question, or statement to be displayed to the player -
+ * Text area. Text area is used to hold a questionText, or statement to be displayed to the player -
  * such as "1 + 1 = ?" or "1, 2, 3, ?" </li>
  * </ol>
  *
@@ -48,26 +49,27 @@ public class GameView extends SurfaceView implements Runnable {
 
     public static final float VERTICAL_DIVIDE_RATIO = 0.8f;
     public static final int BACKGROUND_COLOR = Color.BLACK;
-
     public static final int SPRITE_COUNT = 30;
     public static final int SPRITE_PLACEMENT_ATTEMPTS = 5;
-
     private static final String TAG = "GameView";
+    public final int PLAYER_AGE_TEST = 5;
     private Thread gameThread = null;
     private SurfaceHolder surfaceHolder;
     private Canvas canvas;
     private Paint textPaint;
     private Paint drawPaint;
     private float screenWidth;
-    private float gameHeight;
-    private float textHeight;
-
+    private float gameAreaHeight;
+    private float textAreaHeight;
+    private String gameEngineQuestion = "";
+    private String gameEngineAnswer = "";
+    ;
     private List<Sprite> sprites = new ArrayList<>(SPRITE_COUNT);
+    private int bubblesRemaining;
     private Bitmap spriteImage;
     private boolean isPlaying;
     private int roundCount;
-    private int answer;
-    private String question;
+
 
     /**
      * Default constructor when inflating from programmatically
@@ -127,9 +129,10 @@ public class GameView extends SurfaceView implements Runnable {
      */
     public void onResume() {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        gameHeight = metrics.heightPixels * VERTICAL_DIVIDE_RATIO;
-        textHeight = metrics.heightPixels - gameHeight;
+        gameAreaHeight = metrics.heightPixels * VERTICAL_DIVIDE_RATIO;
+        textAreaHeight = metrics.heightPixels - gameAreaHeight;
         screenWidth = metrics.widthPixels;
+        gameEngineQuestion = "";
         new PrepareRound().execute();
         isPlaying = true;
         gameThread = new Thread(this);
@@ -146,7 +149,6 @@ public class GameView extends SurfaceView implements Runnable {
             draw();
         }
     }
-
 
     /**
      * Updates the drawables
@@ -167,19 +169,17 @@ public class GameView extends SurfaceView implements Runnable {
         if (surfaceHolder.getSurface().isValid()) {
             canvas = surfaceHolder.lockCanvas();
             canvas.drawColor(BACKGROUND_COLOR);
-            canvas.drawLine(0, gameHeight, screenWidth, gameHeight, drawPaint);
-            canvas.drawText(question, screenWidth / 2f, TextFormat
-                    .verticalCenter(gameHeight, textHeight + gameHeight - 50, textPaint), textPaint);
-
+            canvas.drawLine(0, gameAreaHeight, screenWidth, gameAreaHeight, drawPaint);
+            canvas.drawText(gameEngineQuestion, screenWidth / 2f, TextFormat
+                    .verticalCenter(gameAreaHeight, textAreaHeight + gameAreaHeight - 50f,
+                            textPaint), textPaint);
             for (Sprite sprite : sprites) {
                 if (sprite.isVisible()) {
-
                     canvas.drawBitmap(sprite.getSpriteImage(), sprite.getX() - sprite.getRadius(), sprite
                             .getY() - sprite.getRadius(), drawPaint);
 
 // TODO - Get the bubbles to animate using bubble_sprite2
-//                    canvas.drawBitmap(sprite.getSpriteImage(), sprite.getWhatToDraw(), sprite
-//                                    .getWhereToDraw(),   drawPaint);
+
                     canvas.drawText(sprite.getText(), sprite.getX(), TextFormat
                             .verticalCenter(sprite.getY() - BubbleSprite.RADIUS,
                                     sprite.getY() + BubbleSprite.RADIUS, textPaint), textPaint);
@@ -196,11 +196,22 @@ public class GameView extends SurfaceView implements Runnable {
                 for (Sprite sprite : sprites) {
                     if (sprite.isCollision(event.getX(), event.getY())) {
                         sprite.setVisible(false);
+                        try {
+                            if (gameEngineAnswer.equals(sprite.getText())) {
+                                Toast.makeText(getContext(), "Win", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (NumberFormatException e) {
+                            Log.e(TAG, "Unable to convert text to int: " + sprite.getText());
+                        }
                     }
                 }
         }
         return super.onTouchEvent(event);
     }
+
+     protected String buildQuestion(String question, String answer){
+       return "";
+     }
 
     /**
      * Setups up the round in the background while the Round Dialogue is being displayed.
@@ -216,30 +227,30 @@ public class GameView extends SurfaceView implements Runnable {
         @Override
         protected Void doInBackground(Void... params) {
             Random rand = new Random();
-            GameEngine gameEngine = new CountGameEngine();
-            question = gameEngine.getQuestion();
-            answer = gameEngine.getAnswer();
+            GameEngine gameEngine = new CountGameEngine(PLAYER_AGE_TEST);
+            gameEngineAnswer = gameEngine.getAnswer();
+            gameEngineQuestion =  buildQuestion(gameEngine.getQuestion(),gameEngine.getAnswer
+                    ());
             sprites.add(new BubbleSprite(spriteImage,
                     rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)
-                    ) + 1) +
-                            BubbleSprite.RADIUS,
-                    rand.nextInt(((int) gameHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS,
-                    BubbleSprite.RADIUS, "" + answer));
+                    ) + 1) + BubbleSprite.RADIUS,
+                    rand.nextInt(((int) gameAreaHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS,
+                    BubbleSprite.RADIUS, "" + gameEngineAnswer));
             int x = 0;
             int y = 0;
             boolean overlap;
             for (int i = 0; i < SPRITE_COUNT - 1; i++) {
                 int attemptCount = 0;
                 do {
-                    // don't duplicate the correct answer bubble
-                    if (answer == i + 1) {
+                    // don't duplicate the correct gameEngineAnswer bubble
+                    if (gameEngineAnswer.equals(String.valueOf(i + 1))) {
                         attemptCount = SPRITE_PLACEMENT_ATTEMPTS + 1;
                         break;
                     }
                     attemptCount++;
                     overlap = false;
                     x = rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
-                    y = rand.nextInt(((int) gameHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
+                    y = rand.nextInt(((int) gameAreaHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
                     for (Sprite sprite : sprites) {
                         if (sprite.isCollision(x, y, BubbleSprite.RADIUS * 2)) {
                             overlap = true;

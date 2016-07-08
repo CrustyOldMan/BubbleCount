@@ -10,24 +10,28 @@ public interface GameEngine {
 
     /**
      * Gets the answer to the question
+     *
      * @return the answer value
      */
-    int getAnswer();
+    String getAnswer();
 
     /**
      * Sets the answer to the question
+     *
      * @param answer the answer to be stored
      */
-    void setAnswer(int answer);
+    void setAnswer(String answer);
 
     /**
      * Gets the question as a String for display
+     *
      * @return the question
      */
     String getQuestion();
 
     /**
      * Sets the question
+     *
      * @param question the question to be stored
      */
     void setQuestion(String question);
