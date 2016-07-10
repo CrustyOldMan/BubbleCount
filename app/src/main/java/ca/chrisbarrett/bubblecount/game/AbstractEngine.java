@@ -1,6 +1,5 @@
 package ca.chrisbarrett.bubblecount.game;
 
-import java.util.Calendar;
 import java.util.Random;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ import java.util.Set;
  */
 public abstract class AbstractEngine implements GameEngine {
 
-    protected static Random rand = new Random(Calendar.getInstance().getTimeInMillis());
+    protected static Random rand = new Random(System.currentTimeMillis());
     protected String answer;
     protected String question;
     protected Set<String> filler;

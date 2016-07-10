@@ -1,8 +1,15 @@
 package ca.chrisbarrett.bubblecount.model;
 
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.util.Log;
+
+import java.util.Random;
+
+import ca.chrisbarrett.bubblecount.utilities.TextFormat;
 
 /**
  * Concrete implementation of the Sprite for drawing Bubbles on the screen.
@@ -13,164 +20,170 @@ import android.graphics.RectF;
  */
 public class BubbleSprite implements Sprite {
 
-    public static final int RADIUS = 100;
-    protected static final int TOTAL_FRAME_COUNT = 3;
-    protected static final int EXPLODED_FRAME_START = 2;
+    public static final float DEFAULT_RADIUS = 100;
+    public static final float MAX_SPEED = 5;
+    public static final float MIN_SPEED = 2;
 
-    private boolean isVisible;
-    private boolean isExplode;
-    private float x;
-    private float y;
-    private float radius;
-    private String text;
+    private static final Random rand = new Random(System.currentTimeMillis());
+    private static final String TAG = "BubbleSprite";
 
     private Bitmap spriteImage;
-    private int currentFrame;
     private int frameHeight;
     private int frameWidth;
+    private float screenWidth;
+    private float screenHeight;
     private Rect whatToDraw;
     private RectF whereToDraw;
+
+    private float x;
+    private float y;
+    private float xSpeed;
+    private float ySpeed;
+    private float radius;
+    private String text;
+    private boolean isVisible;
 
     /**
      * Constructor to generate a BubbleSprite without text
      *
-     * @param x      the X coordinate center of the BubbleSprite
-     * @param y      the Y coordinate center of the BubbleSprite
-     * @param radius the radius of the BubbleSprite
+     * @param screenWidth  the width of the screen
+     * @param screenHeight the height of the screen
+     * @param text         the text that is associated with the the BubbleSprite
      */
-    public BubbleSprite(Bitmap spriteImage, float x, float y, float radius) {
-        this(spriteImage, x, y, radius, null);
-    }
+    public BubbleSprite (Bitmap spriteImage, float screenWidth, float screenHeight, String text) {
+        this.text = text;
+        this.radius = DEFAULT_RADIUS;
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
 
-    /**
-     * Constructor generates a BubbleSprite with text
-     *
-     * @param x      the X coordinate center of the BubbleSprite
-     * @param y      the Y coordinate center of the BubbleSprite
-     * @param radius the radius of the BubbleSprite
-     * @param text   the text that is associated with the the BubbleSprite
-     */
-    public BubbleSprite(Bitmap spriteImage, float x, float y, float radius, String text) {
-        this.currentFrame = 0;
         this.spriteImage = spriteImage;
         this.frameHeight = spriteImage.getHeight();
         this.frameWidth = spriteImage.getWidth();
-        this.whatToDraw = new Rect(0, 0, frameWidth / 3, frameHeight);
-        this.whereToDraw = new RectF(x - radius, y - radius, radius * 2, radius * 2);
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.text = text;
-        this.isVisible = true;
+
+        // Determine a random position on the game area
+        this.x = (float) rand.nextInt((int) (screenWidth - (radius * 2))) + radius;
+        this.y = (float) rand.nextInt((int) (screenHeight - (radius * 2))) + radius;
+
+        this.whatToDraw = new Rect(0, 0, frameWidth, frameHeight);
+        this.whereToDraw = new RectF(x - radius, y - radius, x + radius, y + radius);
+
+        // Log.i(TAG, "Created: " + this.toString());
     }
 
     @Override
-    public float getX() {
+    public float getX () {
         return x;
     }
 
     @Override
-    public void setX(float x) {
+    public void setX (float x) {
         this.x = x;
     }
 
     @Override
-    public float getY() {
+    public float getY () {
         return y;
     }
 
     @Override
-    public void setY(float y) {
+    public void setY (float y) {
         this.y = y;
+
     }
 
     @Override
-    public float getRadius() {
+    public float getRadius () {
         return radius;
     }
 
     @Override
-    public void setRadius(float radius) {
+    public void setRadius (float radius) {
         this.radius = radius;
     }
 
     @Override
-    public boolean isVisible() {
-        return isVisible;
+    public String getText () {
+        return text;
     }
 
     @Override
-    public void setVisible(boolean isVisible) {
-        this.isVisible = isVisible;
+    public void setText (String text) {
+        this.text = text;
+
     }
 
     @Override
-    public boolean isExplode() {
-        return isExplode;
+    public boolean isCollision (Sprite sprite) {
+        float distance = distance(sprite.getX(), sprite.getY(), this.x, this.y);
+        return distance < radius * 2;
     }
 
     @Override
-    public void setExplode(boolean isExplode) {
-        this.isExplode = isExplode;
+    public boolean isCollision (float x, float y) {
+        float distance = distance(x, y, this.x, this.y);
+        Log.d(TAG, String.format("'%s'(%f,%f) to (%f,%f) = %f vs %f. Collision? %b",
+                this.text, this.x, this.y, x, y, radius * 2, distance, distance < radius * 2));
+        return distance < radius;
+    }
+
+    /**
+     * Helper method to determine the distance between two points
+     * @param x1 x coordinate of the first point
+     * @param y1 y coordinate of the first point
+     * @param x2 x coordinate of the second point
+     * @param y2 y coordinate of the second point
+     * @return the distance as a float value
+     */
+    protected float distance (float x1, float y1, float x2, float y2) {
+        return (float) Math.sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
     }
 
     @Override
-    public Rect getWhatToDraw() {
+    public Rect getWhatToDraw () {
         return whatToDraw;
     }
 
     @Override
-    public RectF getWhereToDraw() {
+    public RectF getWhereToDraw () {
         return whereToDraw;
     }
 
     @Override
-    public void setSpriteImage(Bitmap spriteImage) {
-        this.spriteImage = spriteImage;
-    }
-
-    @Override
-    public Bitmap getSpriteImage() {
+    public Bitmap getSpriteImage () {
         return spriteImage;
     }
 
     @Override
-    public String getText() {
-        if (text == null) {
-            return "";
-        } else {
-            return text;
-        }
+    public void setSpriteImage (Bitmap spriteImage) {
+        this.spriteImage = spriteImage;
     }
 
     @Override
-    public void setText(String text) {
-        this.text = text;
+    public boolean update () {
+
+        whereToDraw.set(x - radius, y - radius, x + radius, y + radius);
+        return false;
     }
 
     @Override
-    public boolean isCollision(float x, float y) {
-        return isCollision(x, y, radius);
+    public void draw (Canvas canvas, Paint drawPaint, Paint textPaint) {
+        canvas.drawBitmap(spriteImage, whatToDraw, whereToDraw, drawPaint);
+        canvas.drawText(text, x, TextFormat.verticalCenter(y - radius, y + radius, textPaint), textPaint);
+
     }
 
     @Override
-    public boolean isCollision(Sprite sprite) {
-        return sprite != null && sprite instanceof BubbleSprite && isCollision(sprite.getX(),
-                sprite.getY(), radius * 2);
-    }
-
-    @Override
-    public boolean isCollision(float x, float y, float distance) {
-        double spread = Math.sqrt((this.x - x) * (this.x - x) +
-                ((this.y - y) * (this.y - y)));
-        return spread <= distance;
-    }
-
-    @Override
-    public void update() {
-        if (isExplode) {
-            whatToDraw.set(currentFrame * frameWidth, 0, currentFrame * frameWidth + frameWidth,
-                    frameHeight);
-        }
+    public String toString () {
+        return "BubbleSprite{" +
+                "screenWidth=" + screenWidth +
+                ", screenHeight=" + screenHeight +
+                ", x=" + x +
+                ", y=" + y +
+                ", xSpeed=" + xSpeed +
+                ", ySpeed=" + ySpeed +
+                ", radius=" + radius +
+                ", text='" + text + '\'' +
+                '}';
     }
 }
+
