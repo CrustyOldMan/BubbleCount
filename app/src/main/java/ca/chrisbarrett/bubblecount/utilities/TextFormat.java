@@ -18,6 +18,6 @@ public class TextFormat {
      * @return the Y value required to vertically center the text
      */
     public static float verticalCenter(float top, float bottom, Paint paint) {
-        return top + ((bottom + 1 - top) / 2) - ((paint.ascent() + paint.descent()) / 2);
+        return top + ((bottom  - top) / 2) - ((paint.ascent() + paint.descent()) / 2);
     }
 }
