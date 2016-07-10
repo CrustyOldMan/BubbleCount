@@ -5,20 +5,16 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.AsyncTask;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
+import java.util.Set;
 
 import ca.chrisbarrett.bubblecount.game.AlphabetGameEngine;
 import ca.chrisbarrett.bubblecount.game.GameEngine;
@@ -50,70 +46,83 @@ public class GameView extends SurfaceView implements Runnable {
     public static final float VERTICAL_DIVIDE_RATIO = 0.8f;
     public static final int BACKGROUND_COLOR = Color.BLACK;
     public static final int SPRITE_PLACEMENT_ATTEMPTS = 5;
-    public static final int SPRITE_TOTAL = 15;
+    public static final int MAX_SPRITES = 20;
+    public static final int MAX_ROUNDS = 5;
     private static final String TAG = "GameView";
 
     private Thread gameThread = null;
+
+    private Context context;
     private SurfaceHolder surfaceHolder;
     private Canvas canvas;
     private Paint textPaint;
     private Paint drawPaint;
+
     private float screenWidth;
     private float gameAreaHeight;
     private float textAreaHeight;
-    private String gameEngineQuestion = "";
-    private String gameEngineAnswer = "";
 
-    private List<Sprite> sprites = new ArrayList<>();
-    private int bubblesRemaining;
-    private Bitmap spriteImage;
-    private boolean isPlaying;
-    private int roundCount;
+    private String gameEngineQuestion;
+    private String gameEngineAnswer;
+    private OnGameViewListener gameCallBack;
 
+    private volatile boolean isRunning;
+    private boolean isVisible;
+    private Set<Sprite> sprites;
+
+    private int levelCount;
+    private long totalTime;
+    private long startTime;
 
     /**
-     * Default constructor when inflating from programmatically
+     * Default constructor when inflated programmatically
      *
      * @param context Context on which the GameView is displayed
      */
-    public GameView(Context context) {
+    public GameView (Context context) {
         this(context, null);
     }
 
+
     /**
-     * Default constructor when inflating from XML file
+     * Default constructor when inflated from XML file
      *
      * @param context Context on which the GameView is displayed
      * @param attrs   optional attributes provided by the XML file
      */
-    public GameView(Context context, AttributeSet attrs) {
+    public GameView (Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
     /**
-     * Default constructor when inflating from XML file in API 11+
+     * Default constructor when inflated from XML file in API 11+
      *
      * @param context  Context on which the GameView is displayed
      * @param attrs    optional attributes provided by the XML file
      * @param defStyle optional defined theme styles provided by XML file
      */
-    public GameView(Context context, AttributeSet attrs, int defStyle) {
+    public GameView (Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+        Log.d(TAG, "Instantiating GameView");
+        this.context = context;
         surfaceHolder = getHolder();
         textPaint = PaintCache.getTextPainter();
         textPaint.setTypeface(BubbleFontCache.getFont(context));
         drawPaint = PaintCache.getDrawablePainter();
-        spriteImage = BubbleSpriteCache.getSprite(context);
-        roundCount = 0;
-        isPlaying = true;
+        try {
+            gameCallBack = (OnGameViewListener) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(context.toString() + " must implement OnGameViewListener");
+        }
     }
 
     /**
      * Must be called when the calling Activity or Fragment calls onPause. Method shuts down the
      * game thread.
      */
-    public void onPause() {
-        isPlaying = false;
+    public void onPause () {
+        Log.d(TAG, "GameView onPause called");
+        isRunning = false;
         if (gameThread != null) {
             try {
                 gameThread.join();
@@ -127,33 +136,46 @@ public class GameView extends SurfaceView implements Runnable {
      * Must be called when the calling Activity or Fragment calls onResume. Method checks the
      * screen dimensions and starts a new thread to run the game.
      */
-    public void onResume() {
+    public void onResume () {
+        Log.d(TAG, "GameView onResume called");
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        gameAreaHeight = metrics.heightPixels * VERTICAL_DIVIDE_RATIO;
-        textAreaHeight = metrics.heightPixels - gameAreaHeight;
         screenWidth = metrics.widthPixels;
-        gameEngineQuestion = "";
-        new PrepareRound().execute();
-        isPlaying = true;
+        float screenHeight = metrics.heightPixels;
+        gameAreaHeight = screenHeight * VERTICAL_DIVIDE_RATIO;
+        textAreaHeight = screenHeight - gameAreaHeight;
+        levelCount = 0;
+        checkGameState();
+    }
+
+    /**
+     * Must be called by the calling Activity or Fragment to begin the level.
+     */
+    public void onStart () {
         gameThread = new Thread(this);
         gameThread.start();
+        isRunning = true;
+        isVisible = true;
+        startTime = System.currentTimeMillis();
     }
 
     /**
      * Thread runner method. Updates and then draws drawables
      */
     @Override
-    public void run() {
-        while (isPlaying) {
+    public void run () {
+        Log.d(TAG, "Runner monitoring isRunning: " + isRunning);
+        while (isRunning) {
             update();
-            draw();
+            if (isVisible) {
+                draw();
+            }
         }
     }
 
     /**
      * Updates the drawables
      */
-    protected void update() {
+    protected void update () {
         for (Sprite sprite : sprites) {
             sprite.update();
         }
@@ -162,97 +184,142 @@ public class GameView extends SurfaceView implements Runnable {
     /**
      * Draws the drawables
      */
-    protected void draw() {
+    protected void draw () {
         if (surfaceHolder.getSurface().isValid()) {
             canvas = surfaceHolder.lockCanvas();
             canvas.drawColor(BACKGROUND_COLOR);
-            canvas.drawLine(0, gameAreaHeight, screenWidth, gameAreaHeight, drawPaint);
             canvas.drawText(gameEngineQuestion, screenWidth / 2f, TextFormat
-                    .verticalCenter(gameAreaHeight, textAreaHeight + gameAreaHeight - 50f,
+                    .verticalCenter(gameAreaHeight, textAreaHeight + gameAreaHeight,
                             textPaint), textPaint);
-            for (Sprite sprite : sprites) {
-                if (sprite.isVisible()) {
-                    canvas.drawBitmap(sprite.getSpriteImage(), sprite.getX() - sprite.getRadius(), sprite
-                            .getY() - sprite.getRadius(), drawPaint);
-
-// TODO - Get the bubbles to animate using bubble_sprite2
-
-                    canvas.drawText(sprite.getText(), sprite.getX(), TextFormat
-                            .verticalCenter(sprite.getY() - BubbleSprite.RADIUS,
-                                    sprite.getY() + BubbleSprite.RADIUS, textPaint), textPaint);
-                }
+            Iterator<Sprite> sprite = sprites.iterator();
+            while (sprite.hasNext()) {
+                sprite.next().draw(canvas, drawPaint, textPaint);
             }
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent (MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                for (Sprite sprite : sprites) {
-                    if (sprite.isCollision(event.getX(), event.getY())) {
-                        sprite.setVisible(false);
-                        try {
-                            if (gameEngineAnswer.equals(sprite.getText())) {
-                                Toast.makeText(getContext(), "Win", Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (NumberFormatException e) {
-                            Log.e(TAG, "Unable to convert text to int: " + sprite.getText());
+                boolean isLevelFinished = false;
+                float x = event.getX();
+                float y = event.getY();
+                Iterator<Sprite> itSprite = sprites.iterator();
+                while (itSprite.hasNext()) {
+                    Sprite sprite = itSprite.next();
+                    if (sprite.isCollision(x, y)) {
+                        if (gameEngineAnswer.equals(sprite.getText())) {
+                            isLevelFinished = true;
+                            break;
+                        } else {
+                            itSprite.remove();
                         }
                     }
+                }
+                if (isLevelFinished) {
+                    checkGameState();
                 }
         }
         return super.onTouchEvent(event);
     }
 
     /**
-     * Setups up the round in the background while the Round Dialogue is being displayed.
-     * Positions the Sprites randomly in the defined area for Sprites.
+     * Helper method to setup a new round, if the round count is less than {@link #MAX_ROUNDS}
+     * rounds. A modal window will appear for
+     */
+    protected void checkGameState () {
+        long endTime = System.currentTimeMillis();
+        onPause();
+        isVisible = false;
+        totalTime += (endTime - startTime);
+        onPause();
+        if (levelCount == 0) {
+            levelCount++;
+            gameCallBack.onGameStart();
+            prepareNewLevel();
+        } else  if (levelCount < MAX_ROUNDS) {
+            levelCount++;
+            gameCallBack.onNewLevel(levelCount);
+            prepareNewLevel();
+        } else {
+            gameCallBack.onGameEnd(totalTime);
+        }
+    }
+
+
+    /**
+     * Sets up the level in the background. Positions the Sprites randomly in the defined area for
+     * Sprites.
      * <p/>
      * Brute force is used to make sure the Sprites do not overlap. {@value GameView#SPRITE_PLACEMENT_ATTEMPTS}
      * attempts to  place the Sprite without overlap will be tried. By keeping the attempts low,
      * the perception of a random generation in numbers is achieved.
      * <p/>
      * The total number of Sprites will be the lesser of the size of {@link GameEngine#getFiller
-     * ()} and {@link #SPRITE_TOTAL}
+     * ()} and {@link #MAX_SPRITES}
      */
-    protected class PrepareRound extends AsyncTask<Void, Void, Void> {
+    protected void prepareNewLevel () {
+        GameEngine gameEngine = new AlphabetGameEngine();
+        gameEngineAnswer = gameEngine.getAnswer();
+        gameEngineQuestion = gameEngine.getQuestion();
+        sprites = new HashSet();
+        Bitmap spriteImage = BubbleSpriteCache.getSprite(context);
 
-        @Override
-        protected Void doInBackground(Void... params) {
-            Random rand = new Random(Calendar.getInstance().getTimeInMillis());
-            GameEngine gameEngine = new AlphabetGameEngine();
-            gameEngineAnswer = gameEngine.getAnswer();
-            gameEngineQuestion = gameEngine.getQuestion();
-            sprites.add(new BubbleSprite(spriteImage,
-                    rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)
-                    ) + 1) + BubbleSprite.RADIUS,
-                    rand.nextInt(((int) gameAreaHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS,
-                    BubbleSprite.RADIUS, gameEngineAnswer));
-            int x = 0;
-            int y = 0;
-            boolean overlap;
-            Iterator<String> filler = gameEngine.getFiller().iterator();
-            while (filler.hasNext() && sprites.size() < SPRITE_TOTAL) {
-                int attemptCount = 0;
-                do {
-                    overlap = false;
-                    x = rand.nextInt(((int) screenWidth - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
-                    y = rand.nextInt(((int) gameAreaHeight - (BubbleSprite.RADIUS * 2)) + 1) + BubbleSprite.RADIUS;
-                    for (Sprite sprite : sprites) {
-                        if (sprite.isCollision(x, y, BubbleSprite.RADIUS * 2)) {
-                            overlap = true;
-                            attemptCount++;
-                        }
+        // Always insert the first bubble as it as the correct answer
+        sprites.add(new BubbleSprite(spriteImage, screenWidth, gameAreaHeight,
+                gameEngineAnswer));
+
+        boolean isSpriteOverlap;
+        Iterator<String> filler = gameEngine.getFiller().iterator();
+        while (filler.hasNext() && sprites.size() < MAX_SPRITES) {
+            Sprite newBubbleSprite;
+            int creationAttempt = 0;
+            do {
+                isSpriteOverlap = false;
+                newBubbleSprite = new BubbleSprite(spriteImage, screenWidth, gameAreaHeight, null);
+                for (Sprite sprite : sprites) {
+                    if (sprite.isCollision(newBubbleSprite)) {
+                        isSpriteOverlap = true;
+                        creationAttempt++;
                     }
-                } while (overlap && attemptCount <= SPRITE_PLACEMENT_ATTEMPTS);
-                if (attemptCount <= SPRITE_PLACEMENT_ATTEMPTS) {
-                    sprites.add(new BubbleSprite(spriteImage, x, y, BubbleSprite.RADIUS,
-                            filler.next()));
                 }
+            } while (isSpriteOverlap && creationAttempt < SPRITE_PLACEMENT_ATTEMPTS);
+            if (creationAttempt < SPRITE_PLACEMENT_ATTEMPTS) {
+                newBubbleSprite.setText(filler.next());
+                sprites.add(newBubbleSprite);
             }
-            return null;
         }
+        Log.d(TAG, "Preparing Round is complete.");
     }
+
+    /**
+     * Activities and Fragments should implement the OnGameViewListener. Game context material is
+     * available through the listener.
+     */
+    public interface OnGameViewListener {
+
+        /**
+         * onNewLevel is called when a new level is about to begin
+         *
+         * @param level that is about to begin
+         */
+        void onNewLevel (int level);
+
+        /**
+         * onGameStart is called when a new game is about to begin
+         */
+        void onGameStart ();
+
+        /**
+         * gameEnd is called when a game has ended
+         *
+         * @param time the total time in milliseconds that the game took
+         */
+        void onGameEnd (long time);
+    }
+
+
 }
+
