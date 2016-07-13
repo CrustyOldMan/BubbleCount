@@ -6,11 +6,11 @@ import android.util.AttributeSet;
 import android.widget.Button;
 
 import ca.chrisbarrett.bubblecount.R;
-import ca.chrisbarrett.bubblecount.utilities.BubbleFontCache;
+import ca.chrisbarrett.bubblecount.util.FontCache;
 
 /**
  * Generates a custom {@link android.widget.Button}, using the TypeFace font defined by {@link
- * BubbleFontCache#getFont(Context)}. Color will be set to the "colorPrimary" value defined in
+ * FontCache#getFont(Context)}. Color will be set to the "colorPrimary" value defined in
  * the color XML file. The button background will be set to the "buttonBackground"value defined in
  * the color XML file.
  *
@@ -24,6 +24,6 @@ public class BubbleButton extends Button {
         super(context, attrs);
         setBackgroundColor(ContextCompat.getColor(context, R.color.buttonBackground));
         setTextColor(ContextCompat.getColor(context, R.color.colorPrimary));
-        setTypeface(BubbleFontCache.getFont(context));
+        setTypeface(FontCache.getFont(context));
     }
 }
