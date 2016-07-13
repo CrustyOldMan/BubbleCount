@@ -1,51 +1,56 @@
 package ca.chrisbarrett.bubblecount.game;
 
+import java.util.LinkedHashSet;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Abstract game engine. Games are based on the British Columbia school curriculum of 2007.
  * Fields are intentionally protected in order to allow faster access by derived classes.
+ * <a href="https://www.bced.gov.bc.ca/irp/pdfs/mathematics/2007mathk7.pdf">https://www.bced.gov.bc.ca/irp/pdfs/mathematics/2007mathk7.pdf</a>
  *
  * @author Chris Barrett
- * @see <a href="https://www.bced.gov.bc.ca/irp/pdfs/mathematics/2007mathk7.pdf">https://www.bced.gov.bc.ca/irp/pdfs/mathematics/2007mathk7.pdf</a>
+ * @see
  * @since Jul 1, 2016
  */
 public abstract class AbstractEngine implements GameEngine {
 
-    protected static Random rand = new Random(System.currentTimeMillis());
+    protected static final String TAG = "GameEngine";
+    protected static final Random rand = new Random(System.currentTimeMillis());
     protected String answer;
     protected String question;
-    protected Set<String> filler;
+    protected LinkedHashSet<String> elements;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public String getAnswer() {
+    public String getAnswer () {
         return answer;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void setAnswer(String answer) {
-        this.answer = answer;
-    }
-
-    @Override
-    public String getQuestion() {
+    public String getQuestion () {
         return question;
     }
 
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void setQuestion(String question) {
-        this.question = question;
+    public LinkedHashSet<String> getElements () {
+        return elements;
     }
 
-    @Override
-    public Set<String> getFiller() {
-        return filler;
-    }
-
-    @Override
-    public void setFiller(Set<String> filler) {
-        this.filler = filler;
-    }
+    /**
+     * Helper method to generate an array of elements. Subclasses must implement. The return should
+     * contain the answer as the first element.
+     *
+     * @return an orderly Set with the answer as the first element
+     */
+    abstract protected LinkedHashSet<String> generateElements();
 
 }
