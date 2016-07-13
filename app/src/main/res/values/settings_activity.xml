@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Values for Preferences called in the SettingsActivity. -->
+    <!-- Placing all of the SettingsActivity related values here was done for easier management.  -->
+
+    <!-- used by Preferences when no value is appropriate -->
+    <integer name="global_no_value">-1</integer>
+
+    <!-- Configures the ability to turn off or on parent controls access to the Settings -->
+    <string name="pref_cat_parental_access_controls">Access Control</string>
+    <string name="pref_parental_access_control_key">lock_settings_activity</string>
+    <string name="pref_parental_access_control_title">Lock Parental Settings</string>
+    <string name="pref_parental_access_control_summary">Password protect the settings menu</string>
+    <bool name="pref_parental_access_control_default">false</bool>
+
+    <!-- Configures the Sound controls - music off/on and MainActivity music toggle on/off -->
+    <string name="pref_cat_sound_controls">Sound Controls</string>
+    <string name="pref_music_is_on_key">music_on</string>
+    <string name="pref_music_is_on_title">Set Music On</string>
+    <string name="pref_music_is_on_summary">Globally turn the music off or on</string>
+    <bool name="pref_music_is_on_default">true</bool>
+    <string name="pref_music_toggle_available_key">music_toggle_on</string>
+    <string name="pref_music_toggle_available_title">Set Music Switch On</string>
+    <string name="pref_music_toggle_available_summary">Remove the sound toggle from the main page</string>
+    <bool name="pref_music_toggle_available_default">true</bool>
+
+    <!-- Configures the PlayerFeed CRUD controls -->
+    <string name="pref_cat_player_management_controls">Player Controls</string>
+    <string name="pref_player_create_key">player_create</string>
+    <string name="pref_player_create_title">Create A Player</string>
+    <string name="pref_player_create_summary">Enter a name and year of birth. That\'s it.</string>
+    <string name="pref_player_edit_key">player_edit</string>
+    <string name="pref_player_edit_title">Edit A Player</string>
+    <string name="pref_player_edit_summary">Update a stored Player</string>
+    <string name="pref_player_delete_key">player_delete</string>
+    <string name="pref_player_delete_title">Delete A Player</string>
+    <string name="pref_player_delete_summary">Erase a stored Player and their game results</string>
+
+</resources>

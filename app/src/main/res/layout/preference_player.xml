@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center_vertical"
+              android:orientation="vertical"
+              android:paddingLeft="@dimen/activity_horizontal_margin"
+              android:paddingRight="@dimen/activity_horizontal_margin">
+
+    <EditText
+        android:id="@+id/player_edittext_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/player_dialog_name_hint"/>
+
+    <NumberPicker
+        android:id="@+id/player_year_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"></NumberPicker>
+
+</LinearLayout>
