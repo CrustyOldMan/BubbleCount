@@ -1,4 +1,4 @@
-package ca.chrisbarrett.bubblecount.utilities;
+package ca.chrisbarrett.bubblecount.util;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -13,9 +13,12 @@ import ca.chrisbarrett.bubblecount.R;
  * @see
  * @since Jul 02, 2016
  */
-public class BubbleSpriteCache {
+public final class SpriteCache {
 
     private static Bitmap bubbleSprite;
+
+    private SpriteCache () {
+    }
 
     /**
      * If the Bubble sprite is not already cached, the Sprite will be loaded from
@@ -23,7 +26,7 @@ public class BubbleSpriteCache {
      * @param context used for calling
      * @return the Bubble sprite
      */
-    public static Bitmap getSprite(Context context) {
+    public static Bitmap getSprite (Context context) {
         if (bubbleSprite == null) {
             bubbleSprite = BitmapFactory.decodeResource(context.getResources(), R.drawable.bubble_sprite);
         }

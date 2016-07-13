@@ -1,4 +1,4 @@
-package ca.chrisbarrett.bubblecount.utilities;
+package ca.chrisbarrett.bubblecount.util;
 
 import android.content.Context;
 import android.graphics.Typeface;
@@ -11,19 +11,22 @@ import android.graphics.Typeface;
  * @see android.graphics.Typeface;
  * @since June 30, 2016
  */
-public class BubbleFontCache {
+public final class FontCache {
 
     public static final String FONT_PATH = "fonts/bubble & soap.ttf";
     private static Typeface typeface;
 
+    private FontCache () {
+    }
+
     /**
      * If the "Bubble & Soap" TrueTypeFont is not already cached, the Typeface will be loaded from
-     * {@value BubbleFontCache#FONT_PATH}.
+     * {@value FontCache#FONT_PATH}.
      *
      * @param context used for calling {@link Context#getAssets()}
      * @return the "Bubble & Soap" TrueTypeFont
      */
-    public static Typeface getFont(Context context) {
+    public static Typeface getFont (Context context) {
         if (typeface == null) {
             typeface = Typeface.createFromAsset(context.getAssets(), FONT_PATH);
         }

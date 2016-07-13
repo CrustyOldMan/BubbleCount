@@ -1,4 +1,4 @@
-package ca.chrisbarrett.bubblecount.utilities;
+package ca.chrisbarrett.bubblecount.util;
 
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -11,7 +11,7 @@ import android.graphics.Paint;
  * @see android.graphics.Paint
  * @since Jul 01, 2016
  */
-public class PaintCache {
+public final class PaintCache {
 
     public static final int DEFAULT_COLOR = Color.WHITE;
     public static final int DEFAULT_LINE_THICKNESS = 2;
@@ -20,6 +20,9 @@ public class PaintCache {
     private static Paint textPaint;
     private static Paint drawPaint;
 
+    private PaintCache () {
+    }
+
     /**
      * Generates the preset configuration for the text painter. The Paint object is assigned the
      * {@link PaintCache#DEFAULT_COLOR} and {@link PaintCache#DEFAULT_TEXT_SIZE}. Text is also
@@ -27,7 +30,7 @@ public class PaintCache {
      *
      * @return the Paint object used for text
      */
-    public static Paint getTextPainter() {
+    public static Paint getTextPainter () {
         if (textPaint == null) {
             textPaint = new Paint();
             textPaint.setColor(DEFAULT_COLOR);
@@ -44,7 +47,7 @@ public class PaintCache {
      *
      * @return the Paint object used for Drawables
      */
-    public static Paint getDrawablePainter() {
+    public static Paint getDrawablePainter () {
         if (drawPaint == null) {
             drawPaint = new Paint();
             drawPaint.setColor(DEFAULT_COLOR);
