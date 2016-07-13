@@ -13,10 +13,10 @@
         android:layout_weight="1" />
 
     <ca.chrisbarrett.bubblecount.view.BubbleButton
-        android:id="@+id/button_play"
+        android:id="@+id/button_main_game"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/button_play"
+        android:text="@string/main_button_game"
         android:textSize="@dimen/abc_text_size_display_4_material" />
 
     <android.support.v4.widget.Space
@@ -25,10 +25,10 @@
         android:layout_weight="1" />
 
     <ca.chrisbarrett.bubblecount.view.BubbleButton
-        android:id="@+id/button_settings"
+        android:id="@+id/button_main_settings"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/button_settings"
+        android:text="@string/main_button_settings"
         android:textSize="@dimen/abc_text_size_display_3_material" />
 
     <android.support.v4.widget.Space
@@ -37,7 +37,7 @@
         android:layout_weight="2" />
 
     <ToggleButton
-        android:id="@+id/toggle_music"
+        android:id="@+id/togglebutton_main_music"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="right"
