@@ -1,47 +1,61 @@
 package ca.chrisbarrett.bubblecount.game;
 
-import java.util.HashSet;
+import android.util.Log;
+
+import java.util.LinkedHashSet;
 
 /**
- * Concrete class of the GameEngine to generate a letter finding game. Game will generate a letter.
+ * Concrete class of the GameEngine to generate a letter finding game. GameFeed will generate a letter.
  * The question generated will display four leading letters.
  * <p/>
  * For example, if the answer generated is "E", the question will be "B  C  D  ?"
+ * <p/>
+ * <a href="https://www.bced.gov.bc.ca/irp/curric_grade_packages/grkcurric_req.pdf">https://www.bced.gov.bc.ca/irp/curric_grade_packages/grkcurric_req.pdf</a>
  *
  * @author Chris Barrett
- * @see <a href="https://www.bced.gov.bc.ca/irp/curric_grade_packages/grkcurric_req.pdf">https://www.bced.gov.bc.ca/irp/curric_grade_packages/grkcurric_req.pdf</a>
+ * @see
  * @since Jul 1, 2016
  */
 public class AlphabetGameEngine extends AbstractEngine {
 
-    public AlphabetGameEngine() {
-        this(5);
+    /**
+     * Default Constructor. Generates using the {@link AbstractEngine#DEFAULT_AGE}
+     */
+    public AlphabetGameEngine () {
+        this(DEFAULT_AGE);
     }
 
-    public AlphabetGameEngine(int age) {
-        char charAnswer = (char) (rand.nextInt((int) 'Z' - (int) 'C') + (int) 'D');
+    /**
+     * Constructor. Accepts the age of the child, and adjusts the range of values accordingly.
+     * For this type of game, however, age is not important. The range will always be 'A' to 'Z'
+     *
+     * @param age
+     */
+    public AlphabetGameEngine (int age) {
+        int max = 'Z';
+        int min = 'A';
 
+        char charAnswer = (char) (rand.nextInt(max - min - 2) + min + 3);
         StringBuilder build = new StringBuilder(9).append('?');
         for (int i = charAnswer - 1; i > charAnswer - 4; i--) {
             build.insert(0, (char) i + "  ");
         }
-        answer = String.valueOf(charAnswer);
+        answer = "" + charAnswer;
         question = build.toString();
-        generateFiller();
+        elements = generateElements();
     }
 
     /**
-     * Helper method to generate an array of content containing all letters of
-     * the alphabet accept the answer value
+     * {@inheritDoc}
      */
-    protected void generateFiller() {
-        filler = new HashSet<String>(23);
-        char charAnswer = answer.charAt(0);
-        for (int i = 0; i < 26; i++) {
-            if ((char) i + 'A' != charAnswer) {
-                filler.add(String.valueOf((char) (i + 'A')));
-            }
+    @Override
+    protected LinkedHashSet<String> generateElements () {
+        LinkedHashSet<String> temp = new LinkedHashSet<>(ALPHABET_SIZE);
+        temp.add(answer);
+        for (int i = 0; i < ALPHABET_SIZE; i++) {
+            temp.add("" + (char) (i + 'A'));
         }
+        Log.d(TAG, temp.toString());
+        return temp;
     }
-
 }
