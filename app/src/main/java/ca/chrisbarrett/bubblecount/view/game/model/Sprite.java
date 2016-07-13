@@ -1,4 +1,4 @@
-package ca.chrisbarrett.bubblecount.model;
+package ca.chrisbarrett.bubblecount.view.game.model;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
