@@ -1,75 +1,193 @@
 package ca.chrisbarrett.bubblecount;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
+import android.widget.Button;
 import android.widget.ToggleButton;
 
-import ca.chrisbarrett.bubblecount.view.BubbleButton;
+import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
+import ca.chrisbarrett.bubblecount.util.Values;
 
 /**
- * A main "splash" activity of the app. Provides two buttons (play the game, access the
- * settings menu). Also starts the music player and loads Players from the database in the
- * background.
+ * The main entry point for the app. Presents an activity with three options:
+ * <ol>
+ * <li>Play GameFeed - Starts the GameFeed</li>
+ * <li>Settings - User Configuration</li>
+ * <li>Music Toggle - Music On/Off (Visibility can be overridden in Settings by settings global
+ * Music Toggle Off</li>
+ * </ol>
  *
  * @author Chris Barrett
  * @see android.support.v7.app.AppCompatActivity
  * @since Jun 26, 2016
  */
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,
+        BackgroundMusicManager.OnBackgroundMusicListener {
 
     private static final String TAG = "MainActivity";
 
-    private BubbleButton buttonPlay;
-    private BubbleButton buttonSettings;
+    private static final BackgroundMusicManager MUSIC_MANAGER = BackgroundMusicManager.getInstance();
+    private static boolean isContinueMusic;
     private ToggleButton toggleMusic;
+    private boolean isMusicToggleAvailable;
+    private boolean isMusicOn;
+
+
+    //
+    // LifeCycles Events Begin Here
+    //
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        try {
-            buttonPlay = (BubbleButton) findViewById(R.id.button_play);
-            buttonPlay.setOnClickListener(this);
-            buttonSettings = (BubbleButton) findViewById(R.id.button_settings);
-            buttonSettings.setOnClickListener(this);
-            toggleMusic = (ToggleButton) findViewById(R.id.toggle_music);
-            toggleMusic.setOnClickListener(this);
-        } catch (NullPointerException e){
-            Log.e(TAG, "Assigning OnClickListener failure: " + e.getMessage());
+        MUSIC_MANAGER.setOnBackgroundMusicListener(this);
+        Button buttonGamePlay = (Button) findViewById(R.id.button_main_game);
+        if (buttonGamePlay!=null){
+            buttonGamePlay.setOnClickListener(this);
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+        Button buttonSettings = (Button) findViewById(R.id.button_main_settings);
+        if (buttonSettings != null){
+            buttonSettings.setOnClickListener(this);
+        }
+        toggleMusic = (ToggleButton) findViewById(R.id.togglebutton_main_music);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.d(TAG, "onResume called.");
+        // Loading the music can take time. Do this as soon as you can.
+        MUSIC_MANAGER.initialize(this, R.raw.background);
+        loadRelevantPreferences();
+        if (isMusicToggleAvailable) {
+            toggleMusic.setChecked(isMusicOn);
+            toggleMusic.setOnClickListener(this);
+            toggleMusic.setVisibility(View.VISIBLE);
+        } else {
+            toggleMusic.setVisibility(View.GONE);
+        }
+        isContinueMusic = false;
     }
 
     @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.button_play:
-                Intent intent = new Intent(MainActivity.this, GameActivity.class);
-                startActivity(intent);
-                break;
-            case R.id.button_settings:
-                Toast.makeText(this, "button_settings", Toast.LENGTH_SHORT).show();
-                //TODO - Implement SettingsActivity
-                break;
-            case R.id.toggle_music:
-                Toast.makeText(this, "toggle_music", Toast.LENGTH_SHORT).show();
-                //TODO - Implement Music Player and toggle to turn off and on
-                break;
-            default:
-                // Nothing to see here
+    protected void onPause() {
+        super.onPause();
+        if (!isContinueMusic) {
+            Log.d(TAG, "onPause called and releasing MUSIC_MANAGER.");
+            MUSIC_MANAGER.musicRelease();
         }
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case Values.ResultCode.ACTIVITY_SETTINGS:
+                Log.d(TAG, "Back from SettingsActivity");
+                // Nothing to do here - placeholder for now
+                break;
+            case Values.ResultCode.ACTIVITY_GAME:
+                Log.d(TAG, "Back from GameActivity");
+                if (RESULT_OK == resultCode) {
+                    Log.d(TAG, "Back from GamesActivity");
+                    // Nothing to do here - placeholder for now
+                } else if (RESULT_CANCELED == resultCode) {
+                    // PlayerFeed didn't finish a game - nothing to do here
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    //
+    // Listeners Begin Here
+    //
+
+    /**
+     * Three events are handled in the onClick:
+     * <ul>
+     * <li>GameFeed Button pressed - musicStart the game</li>
+     * <li>Settings Button pressed - musicStart the settings</li>
+     * <li>Music Toggle - turned music off and on (if the option is available)</li>
+     * </ul>
+     *
+     * @param v
+     */
+    @Override
+    public void onClick(View v) {
+        Intent intent = null;
+        switch (v.getId()) {
+            case R.id.button_main_game:
+                Log.d(TAG, "GameFeed Button pressed");
+                intent = new Intent(this, GameActivity.class);
+                isContinueMusic = true;
+                startActivityForResult(intent, Values.ResultCode.ACTIVITY_GAME);
+                break;
+            case R.id.button_main_settings:
+                Log.d(TAG, "Settings Button pressed");
+                intent = new Intent(this, SettingsActivity.class);
+                isContinueMusic = true;
+                startActivityForResult(intent, Values.ResultCode.ACTIVITY_SETTINGS);
+                break;
+            case R.id.togglebutton_main_music:
+                isMusicOn = toggleMusic.isChecked();
+                Log.d(TAG, "Music Toggle changed to " + isMusicOn);
+                if (isMusicOn) {
+                    MUSIC_MANAGER.musicStart();
+                } else {
+                    MUSIC_MANAGER.musicPause();
+                }
+                saveMusicOnPreference();
+                break;
+        }
+    }
+
+    /**
+     * Starts the music when the MUSIC_MANAGER advises the music is ready
+     */
+    @Override
+    public void onMusicReady() {
+        Log.d(TAG, "Notified by BackgroundMusicManager music is ready.");
+        if (isMusicOn && !MUSIC_MANAGER.isPlaying()) {
+            Log.d(TAG, "Calling for music to start.");
+            MUSIC_MANAGER.musicStart();
+        }
+    }
+
+    //
+    // Helper methods begin here
+    //
+
+    /**
+     * This method loads the preferences relevant to this task, using property files for the
+     * defaults
+     */
+    protected void loadRelevantPreferences() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isMusicToggleDefault = getResources().getBoolean(R.bool.pref_music_toggle_available_default);
+        isMusicToggleAvailable = sharedPref.getBoolean(getString(R.string.pref_music_toggle_available_key),
+                isMusicToggleDefault);
+        isMusicOn = sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), isMusicToggleAvailable);
+    }
+
+    /**
+     * This method updates the preference for isMusicOn
+     */
+    protected void saveMusicOnPreference() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor prefEditor = sharedPref.edit();
+        prefEditor.putBoolean(getString(R.string.pref_music_is_on_key), isMusicOn).commit();
+        Log.d(TAG, String.format("Saved Preference for MusicOn to: %b",
+                sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), false)));
+    }
+
+    //
+    // Inner classes begin here
+    //
+
 }
