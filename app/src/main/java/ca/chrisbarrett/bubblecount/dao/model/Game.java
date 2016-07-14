@@ -7,7 +7,8 @@ import ca.chrisbarrett.bubblecount.util.Values;
 
 /**
  * POJO to hold a Game object, consisting of the primary key for the database (or NO_ID if not yet
- * assigned, the name of the game for display purposes, and the minimum of required for the game.
+ * assigned, the displayable of the game for display purposes and the fully qualified class path to
+ * the class for a future class loader, and the minimum of required for the game.
  *
  * @author Chris Barrett
  * @see
@@ -16,45 +17,44 @@ import ca.chrisbarrett.bubblecount.util.Values;
 
 public class Game implements Parcelable {
 
-    private int id;             // pk of the game
-    private String name;        // name of the game
-    private int minimumAge;     // minimum age of the game
+    private int id;                     // pk of the game
+    private String displayName;         // displays the name of the game
+    private String classPathName;       // class path to the game
+    private int minimumAge;             // minimum age of the game
 
     /**
      * Default constructor.
      */
     public Game () {
-        this(Values.NO_ID, "", Values.NO_ID);
+        this(Values.NO_ID, null, null, Values.NO_ID);
     }
 
     /**
      * Constructor called with default NO_ID value.
      *
-     * @param name       the name of the game for display purposes
-     * @param minimumAge the minimum age required for the game
+     * @param displayName   the displayName of the game for display purposes
+     * @param classPathName
+     * @param minimumAge    the minimum age required for the game
      */
-    public Game (String name, int minimumAge) {
-        this(Values.NO_ID, name, minimumAge);
+    public Game (String displayName, String classPathName, int minimumAge) {
+        this(Values.NO_ID, displayName, classPathName, minimumAge);
     }
 
     /**
      * Constructor called from the database.
      *
-     * @param id         the id key assigned in the database
-     * @param name
+     * @param id
+     * @param displayName
+     * @param classPathName
      * @param minimumAge
      */
-    public Game (int id, String name, int minimumAge) {
+    public Game (int id, String displayName, String classPathName, int minimumAge) {
         this.id = id;
-        this.name = name;
+        this.displayName = displayName;
+        this.classPathName = classPathName;
         this.minimumAge = minimumAge;
     }
 
-    protected Game (Parcel in) {
-        id = in.readInt();
-        name = in.readString();
-        minimumAge = in.readInt();
-    }
 
     public int getId () {
         return id;
@@ -64,12 +64,20 @@ public class Game implements Parcelable {
         this.id = id;
     }
 
-    public String getName () {
-        return name;
+    public String getDisplayName () {
+        return displayName;
     }
 
-    public void setName (String name) {
-        this.name = name;
+    public void setDisplayName (String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getClassPathName () {
+        return classPathName;
+    }
+
+    public void setClassPathName (String classPathName) {
+        this.classPathName = classPathName;
     }
 
     public int getMinimumAge () {
@@ -80,13 +88,13 @@ public class Game implements Parcelable {
         this.minimumAge = minimumAge;
     }
 
-    /**
-     * As the database PK is unique, equals should run find on that.
-     * As a safety check, the name will also be used for those objects not yet persisted.
-     *
-     * @param o
-     * @return
-     */
+    protected Game(Parcel in) {
+        id = in.readInt();
+        displayName = in.readString();
+        classPathName = in.readString();
+        minimumAge = in.readInt();
+    }
+
     @Override
     public boolean equals (Object o) {
         if (this == o) return true;
@@ -95,38 +103,54 @@ public class Game implements Parcelable {
         Game game = (Game) o;
 
         if (id != game.id) return false;
-        return !(name != null ? !name.equals(game.name) : game.name != null);
+        if (minimumAge != game.minimumAge) return false;
+        if (displayName != null ? !displayName.equals(game.displayName) : game.displayName != null)
+            return false;
+        return !(classPathName != null ? !classPathName.equals(game.classPathName) : game.classPathName != null);
 
     }
 
     @Override
     public int hashCode () {
         int result = id;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
+        result = 31 * result + (classPathName != null ? classPathName.hashCode() : 0);
+        result = 31 * result + minimumAge;
         return result;
     }
 
     @Override
-    public int describeContents () {
+    public String toString () {
+        return "Game{" +
+                "id=" + id +
+                ", displayName='" + displayName + '\'' +
+                ", classPathName='" + classPathName + '\'' +
+                ", minimumAge=" + minimumAge +
+                '}';
+    }
+
+    @Override
+    public int describeContents() {
         return 0;
     }
 
     @Override
-    public void writeToParcel (Parcel dest, int flags) {
+    public void writeToParcel(Parcel dest, int flags) {
         dest.writeInt(id);
-        dest.writeString(name);
+        dest.writeString(displayName);
+        dest.writeString(classPathName);
         dest.writeInt(minimumAge);
     }
 
     @SuppressWarnings("unused")
     public static final Parcelable.Creator<Game> CREATOR = new Parcelable.Creator<Game>() {
         @Override
-        public Game createFromParcel (Parcel in) {
+        public Game createFromParcel(Parcel in) {
             return new Game(in);
         }
 
         @Override
-        public Game[] newArray (int size) {
+        public Game[] newArray(int size) {
             return new Game[size];
         }
     };
