@@ -12,6 +12,7 @@ public interface GameEngine {
 
     int DEFAULT_SIZE = 50;
     int DEFAULT_AGE = 5;
+    int NO_MINIMUM_AGE = 0;
 
     /**
      * Gets the correctElement to the question
