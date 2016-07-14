@@ -126,6 +126,17 @@ public class Player  implements Parcelable {
         return result;
     }
 
+    @Override
+    public String toString () {
+        return "Player{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", yearOfBirth=" + yearOfBirth +
+                ", createdOn=" + createdOn +
+                ", syncedOn=" + syncedOn +
+                '}';
+    }
+
     protected Player(Parcel in) {
         id = in.readInt();
         name = in.readString();

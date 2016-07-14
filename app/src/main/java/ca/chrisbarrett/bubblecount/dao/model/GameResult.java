@@ -142,6 +142,18 @@ public class GameResult implements Parcelable {
     }
 
     @Override
+    public String toString () {
+        return "GameResult{" +
+                "id=" + id +
+                ", timeResult=" + timeResult +
+                ", createdOn=" + createdOn +
+                ", syncedOn=" + syncedOn +
+                ", playerId=" + playerId +
+                ", gameId=" + gameId +
+                '}';
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }
