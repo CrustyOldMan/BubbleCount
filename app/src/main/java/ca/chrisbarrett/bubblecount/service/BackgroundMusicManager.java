@@ -59,10 +59,18 @@ public class BackgroundMusicManager {
      *
      * @param context the applicationContext
      * @param resId   the resource identifying of the sound file
-     * @throws ExceptionInInitializerError
+     * @throws ExceptionInInitializerError should something go wrong with loading the mediaPlayer
+     * @throws ClassCastException          if the calling class does not implement the
+     *                                     {@link ca.chrisbarrett.bubblecount.service.BackgroundMusicManager.OnBackgroundMusicListener}
      */
     public void initialize (final Context context, final int resId) throws
-            ExceptionInInitializerError {
+            ExceptionInInitializerError, ClassCastException {
+        try {
+            listener = (OnBackgroundMusicListener) context;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(context.toString() + " must implement OnGameViewListener");
+        }
+
         if (mediaPlayer == null) {
             Log.d(TAG, "Initializing the BackgroundMusicManager");
             musicThread = new Thread(new Runnable() {
