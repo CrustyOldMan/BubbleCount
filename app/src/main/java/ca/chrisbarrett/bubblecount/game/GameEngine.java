@@ -1,6 +1,6 @@
 package ca.chrisbarrett.bubblecount.game;
 
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * The GameFeed GameEngine interface. All concrete classes must implement.
@@ -10,16 +10,22 @@ import java.util.LinkedHashSet;
  */
 public interface GameEngine {
 
-    int ALPHABET_SIZE = 26;
     int DEFAULT_SIZE = 50;
     int DEFAULT_AGE = 5;
 
     /**
-     * Gets the answer to the question
+     * Gets the correctElement to the question
      *
-     * @return the answer value
+     * @return the correctElement value
      */
-    String getAnswer ();
+    String getCorrectElement ();
+
+    /**
+     * Gets the incorrectElements as a Set for display
+     *
+     * @return a Set of incorrect elements
+     */
+    Set<String> getIncorrectElements ();
 
     /**
      * Gets the question as a String for display
@@ -28,14 +34,9 @@ public interface GameEngine {
      */
     String getQuestion ();
 
-
     /**
-     * Generates the elements of the appropriate type for the Bubbles.
-     * The size will be {@link #DEFAULT_SIZE}. The answer value will always be in the first element
-     * position.
-     *
-     * @return elements in an order maintained LinkedHashSet.
+     * Helper method used to generate a new random question, correctElement, and Set of incorrectElements
      */
-    LinkedHashSet<String> getElements ();
+    void randomize();
 
 }

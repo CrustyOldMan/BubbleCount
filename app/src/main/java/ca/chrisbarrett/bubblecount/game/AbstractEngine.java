@@ -1,7 +1,10 @@
 package ca.chrisbarrett.bubblecount.game;
 
-import java.util.LinkedHashSet;
+import android.util.Log;
+
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Abstract game engine. Games are based on the British Columbia school curriculum of 2007.
@@ -16,16 +19,16 @@ public abstract class AbstractEngine implements GameEngine {
 
     protected static final String TAG = "GameEngine";
     protected static final Random rand = new Random(System.currentTimeMillis());
-    protected String answer;
+    protected String correctElement;
     protected String question;
-    protected LinkedHashSet<String> elements;
+    protected Set<String> incorrectElements;
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String getAnswer () {
-        return answer;
+    public String getCorrectElement () {
+        return correctElement;
     }
 
     /**
@@ -41,16 +44,46 @@ public abstract class AbstractEngine implements GameEngine {
      * {@inheritDoc}
      */
     @Override
-    public LinkedHashSet<String> getElements () {
-        return elements;
+    public Set<String> getIncorrectElements () {
+        return incorrectElements;
     }
 
     /**
-     * Helper method to generate an array of elements. Subclasses must implement. The return should
-     * contain the answer as the first element.
+     * Helper method to generate an array of incorrectElements using a char range.
+     * Values calculated will be between the min and max value specified for the size indicated.
      *
-     * @return an orderly Set with the answer as the first element
+     * @param minValue minimum value of the Set
+     * @param maxValue maximum value of the Set
+     * @return Set of the inCorrectElements
      */
-    abstract protected LinkedHashSet<String> generateElements();
+    protected Set<String> generateIncorrectElements (char minValue, char maxValue) {
+        incorrectElements = new HashSet<>(maxValue - minValue);
+        for (int i = minValue; i <= maxValue; i++) {
+            incorrectElements.add("" + (char) i);
+        }
+        incorrectElements.remove(correctElement);
+        Log.d(TAG, String.format("Question: %s, Answer: %s", question, correctElement));
+        Log.d(TAG, incorrectElements.toString());
+        return incorrectElements;
+    }
+
+    /**
+     * Helper method to generate an Set of incorrectElements using an int range.
+     * Values calculated will be between the minValue and maxValue indicated.
+     *
+     * @param minValue minimum value of the Set
+     * @param maxValue maximum value of the Set
+     * @return Set of the inCorrectElements
+     */
+    protected Set<String> generateIncorrectElements (int minValue, int maxValue) {
+        incorrectElements = new HashSet<>(maxValue - minValue);
+        for (int i = minValue; i <= maxValue; i++) {
+            incorrectElements.add("" + i);
+        }
+        incorrectElements.remove(correctElement);
+        Log.d(TAG, String.format("Question: %s, Answer: %s", question, correctElement));
+        Log.d(TAG, incorrectElements.toString());
+        return incorrectElements;
+    }
 
 }
