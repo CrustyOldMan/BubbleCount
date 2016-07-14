@@ -11,12 +11,12 @@ import android.util.Log;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 import ca.chrisbarrett.bubblecount.dao.model.Game;
 import ca.chrisbarrett.bubblecount.dao.model.GameResult;
 import ca.chrisbarrett.bubblecount.dao.model.Player;
+import ca.chrisbarrett.bubblecount.game.GameEngine;
 
 /**
  * Helper class for the database. This class handles creation and upgrades of the database and
@@ -105,8 +105,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void insertGameResult (SQLiteDatabase db, GameResult result) {
         ContentValues values = new ContentValues();
         values.put(Feeder.GameResultFeeder.COLUMN_TIME_RESULT, result.getTimeResult());
-        values.put(Feeder.GameResultFeeder.COLUMN_CREATED_ON, Feeder.convertToDatabaseFormat(result.getCreatedOn()));
-        values.put(Feeder.GameResultFeeder.COLUMN_SYNCED_ON, Feeder.convertToDatabaseFormat(result.getSyncedOn()));
+        values.put(Feeder.GameResultFeeder.COLUMN_CREATED_ON, Feeder.dateToDatabaseFormat(result.getCreatedOn()));
+        values.put(Feeder.GameResultFeeder.COLUMN_SYNCED_ON, Feeder.dateToDatabaseFormat(result.getSyncedOn()));
         values.put(Feeder.GameResultFeeder.COLUMN_FK_GAME_ID, result.getGameId());
         values.put(Feeder.GameResultFeeder.COLUMN_FK_PLAYER_ID, result.getPlayerId());
         db.insert(Feeder.GameResultFeeder.TABLE_NAME, null, values);
@@ -122,8 +122,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(Feeder.PlayerFeed.COLUMN_NAME, player.getName());
         values.put(Feeder.PlayerFeed.COLUMN_YEAR_OF_BIRTH, player.getYearOfBirth());
-        values.put(Feeder.PlayerFeed.COLUMN_CREATED_ON, Feeder.convertToDatabaseFormat(player.getCreatedOn()));
-        values.put(Feeder.PlayerFeed.COLUMN_CREATED_ON, "");
+        values.put(Feeder.PlayerFeed.COLUMN_CREATED_ON, Feeder.dateToDatabaseFormat(player.getCreatedOn()));
+        values.put(Feeder.PlayerFeed.COLUMN_SYNCED_ON, Feeder.dateToDatabaseFormat(player.getSyncedOn()));
         db.insert(Feeder.PlayerFeed.TABLE_NAME, null, values);
 
     }
@@ -134,9 +134,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param db
      */
     protected void insertGamesAtCreation (SQLiteDatabase db) {
-        Game game = new Game("Letter Sequence", "ca.chrisbarrett.bubblecount.game.AlphabetGameEngine", 0);
+        Game game = new Game("Letter Sequence", "ca.chrisbarrett.bubblecount.game.AlphabetGameEngine", GameEngine.NO_MINIMUM_AGE);
         insertGame(db, game);
-        game = new Game("Number Sequence", "ca.chrisbarrett.bubblecount.game.CountGameEngine", 0);
+        game = new Game("Number Sequence", "ca.chrisbarrett.bubblecount.game.CountGameEngine", GameEngine.NO_MINIMUM_AGE);
         insertGame(db, game);
     }
 
@@ -146,7 +146,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * @param db
      */
     protected void insertPlayersAtCreation (SQLiteDatabase db) {
-        Player player = new Player("Chris", 1974, Calendar.getInstance().getTime());
+        Player player = new Player("Chris", 1974);
         insertPlayer(db, player);
     }
 
@@ -190,7 +190,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
          * @return a well-formed Date object
          * @throws IllegalArgumentException
          */
-        public static Date convertFromDatabaseFormat (String input) throws
+        public static Date dateFromDatabaseFormat (String input) throws
                 IllegalArgumentException {
             SimpleDateFormat formatter = new SimpleDateFormat(FORMAT_DATE_TIME);
             Date date = null;
@@ -215,7 +215,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
          * @return a well-formed String ready for storage in the database
          * @throws IllegalArgumentException
          */
-        public static String convertToDatabaseFormat (Date date) throws IllegalArgumentException {
+        public static String dateToDatabaseFormat (Date date) throws IllegalArgumentException {
             SimpleDateFormat formatter = new SimpleDateFormat(FORMAT_DATE_TIME);
             String string = null;
             try {
