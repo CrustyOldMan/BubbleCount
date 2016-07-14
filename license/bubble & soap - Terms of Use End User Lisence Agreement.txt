@@ -2,8 +2,8 @@
 TERMS OF USE
 -----------
 
-Font name:Bubble & Soap.ttf
-By  Medina Grégory / dcoxy © (copyright) Free for personal use
+Font displayName:Bubble & Soap.ttf
+By  Medina Grï¿½gory / dcoxy ï¿½ (copyright) Free for personal use
 Donation required for Commercial Use 
 Donate to: dcoxybrush@gmail.com
 
@@ -63,7 +63,7 @@ redistribute this font, please contact me BEFORE: dcoxymg@gmail.com (with detail
 
 5.) Upon downloading this font, the user accepts all liability and 
 sole responsibility for the font file and any accompanying files 
-therein. Medina Grégory/dcoxy is not responsible or 
+therein. Medina Grï¿½gory/dcoxy is not responsible or 
 liable for any damages, loss or other consequences incurred 
 as a result of downloading this font, or otherwise relating or 
 associated with the download. 
