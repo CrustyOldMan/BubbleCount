@@ -67,6 +67,7 @@ public class GameActivity extends AppCompatActivity implements GameView.OnGameVi
     public void onBackPressed() {
         Log.d(TAG, "Back button pressed. Making sure isContinueMusic continues.");
         isContinueMusic = true;
+        setResult(RESULT_CANCELED);
         super.onBackPressed();
     }
 
@@ -96,6 +97,7 @@ public class GameActivity extends AppCompatActivity implements GameView.OnGameVi
         isContinueMusic = true;
         // TODO - Save to the database.
         setResult(Activity.RESULT_OK);
+        finish();
     }
 
     //
