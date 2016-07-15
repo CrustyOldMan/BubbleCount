@@ -91,4 +91,12 @@ public interface AppDatabase {
      */
     void updatePlayer(SQLiteDatabase db, Player player);
 
+    /**
+     * Deletes a Player in the database
+     *
+     * @param db
+     * @param player
+     */
+    void deletePlayer(SQLiteDatabase db, Player player);
+
 }
