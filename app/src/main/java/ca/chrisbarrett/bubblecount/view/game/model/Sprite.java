@@ -71,6 +71,17 @@ public interface Sprite {
     void setText (String text);
 
     /**
+     * Gets the visibility state of the Sprite
+     */
+    boolean getVisibility();
+
+    /**
+     * Sets the visibility of the Sprite
+     * @param isVisible
+     */
+    void setVisibility(boolean isVisible);
+
+    /**
      * Checks to see if the Sprite has collided with another Sprite object
      *
      * @param sprite Sprite object to be checked against
@@ -123,7 +134,7 @@ public interface Sprite {
     boolean update ();
 
     /**
-     * Draws the sprite
+     * Draws the sprite if the sprite is visible
      *
      * @param canvas    the canvas to draw on
      * @param drawPaint the paintbrush to use for images

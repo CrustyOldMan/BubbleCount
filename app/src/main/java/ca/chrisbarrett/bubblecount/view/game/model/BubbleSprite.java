@@ -49,7 +49,7 @@ public class BubbleSprite implements Sprite {
      * @param screenHeight the height of the screen
      * @param text         the text that is associated with the the BubbleSprite
      */
-    public BubbleSprite (Bitmap spriteImage, float screenWidth, float screenHeight, String text) {
+    public BubbleSprite(Bitmap spriteImage, float screenWidth, float screenHeight, String text) {
         this.text = text;
         this.radius = DEFAULT_RADIUS;
         this.screenWidth = screenWidth;
@@ -66,14 +66,15 @@ public class BubbleSprite implements Sprite {
         this.whatToDraw = new Rect(0, 0, frameWidth, frameHeight);
         this.whereToDraw = new RectF(x - radius, y - radius, x + radius, y + radius);
 
-        // Log.d(TAG, "Created: " + this.toString());
+        // Set to visible by default
+        isVisible = true;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public float getX () {
+    public float getX() {
         return x;
     }
 
@@ -81,7 +82,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public void setX (float x) {
+    public void setX(float x) {
         this.x = x;
     }
 
@@ -89,7 +90,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public float getY () {
+    public float getY() {
         return y;
     }
 
@@ -97,16 +98,15 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public void setY (float y) {
+    public void setY(float y) {
         this.y = y;
-
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public float getRadius () {
+    public float getRadius() {
         return radius;
     }
 
@@ -114,7 +114,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public void setRadius (float radius) {
+    public void setRadius(float radius) {
         this.radius = radius;
     }
 
@@ -122,7 +122,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public String getText () {
+    public String getText() {
         return text;
     }
 
@@ -130,16 +130,30 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public void setText (String text) {
+    public void setText(String text) {
         this.text = text;
+    }
 
+    @Override
+    public boolean getVisibility() {
+        return isVisible;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param isVisible
+     */
+    @Override
+    public void setVisibility(boolean isVisible) {
+        this.isVisible = isVisible;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Rect getWhatToDraw () {
+    public Rect getWhatToDraw() {
         return whatToDraw;
     }
 
@@ -147,7 +161,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public RectF getWhereToDraw () {
+    public RectF getWhereToDraw() {
         return whereToDraw;
     }
 
@@ -155,7 +169,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public Bitmap getSpriteImage () {
+    public Bitmap getSpriteImage() {
         return spriteImage;
     }
 
@@ -163,7 +177,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public void setSpriteImage (Bitmap spriteImage) {
+    public void setSpriteImage(Bitmap spriteImage) {
         this.spriteImage = spriteImage;
     }
 
@@ -171,7 +185,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public boolean isCollision (Sprite sprite) {
+    public boolean isCollision(Sprite sprite) {
         float distance = distance(sprite.getX(), sprite.getY(), this.x, this.y);
         return distance < radius * 2;
     }
@@ -180,7 +194,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public boolean isCollision (float x, float y) {
+    public boolean isCollision(float x, float y) {
         float distance = distance(x, y, this.x, this.y);
         //       Log.d(TAG, String.format("'%s'(%f,%f) to (%f,%f) = %f vs %f. Collision? %b",  this.text, this.x, this.y, x, y, radius * 2, distance, distance < radius * 2));
         return distance < radius;
@@ -190,7 +204,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public boolean update () {
+    public boolean update() {
         whereToDraw.set(x - radius, y - radius, x + radius, y + radius);
         return false;
     }
@@ -199,9 +213,11 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public void draw (Canvas canvas, Paint drawPaint, Paint textPaint) {
-        canvas.drawBitmap(spriteImage, whatToDraw, whereToDraw, drawPaint);
-        canvas.drawText(text, x, TextFormat.verticalCenter(y - radius, y + radius, textPaint), textPaint);
+    public void draw(Canvas canvas, Paint drawPaint, Paint textPaint) {
+        if (isVisible) {
+            canvas.drawBitmap(spriteImage, whatToDraw, whereToDraw, drawPaint);
+            canvas.drawText(text, x, TextFormat.verticalCenter(y - radius, y + radius, textPaint), textPaint);
+        }
     }
 
     //
@@ -217,7 +233,7 @@ public class BubbleSprite implements Sprite {
      * @param y2 y coordinate of the second point
      * @return the distance as a float value
      */
-    protected float distance (float x1, float y1, float x2, float y2) {
+    protected float distance(float x1, float y1, float x2, float y2) {
         return (float) Math.sqrt(((x1 - x2) * (x1 - x2)) + ((y1 - y2) * (y1 - y2)));
     }
 
@@ -225,7 +241,7 @@ public class BubbleSprite implements Sprite {
      * {@inheritDoc}
      */
     @Override
-    public String toString () {
+    public String toString() {
         return "BubbleSprite{" +
                 "screenWidth=" + screenWidth +
                 ", screenHeight=" + screenHeight +
@@ -235,6 +251,7 @@ public class BubbleSprite implements Sprite {
                 ", ySpeed=" + ySpeed +
                 ", radius=" + radius +
                 ", text='" + text + '\'' +
+                ", isVisible=" +isVisible +
                 '}';
     }
 }
