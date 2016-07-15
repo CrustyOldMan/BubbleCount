@@ -72,6 +72,7 @@ public interface AppDatabase {
      *
      * @param db
      * @param player
+     * * @return
      */
     long insertPlayer(SQLiteDatabase db, Player player);
 
@@ -80,6 +81,7 @@ public interface AppDatabase {
      *
      * @param db
      * @param gameResult
+     * @return
      */
     long insertGameResult(SQLiteDatabase db, GameResult gameResult);
 
@@ -96,7 +98,8 @@ public interface AppDatabase {
      *
      * @param db
      * @param player
+     * @return number of rows deleted
      */
-    void deletePlayer(SQLiteDatabase db, Player player);
+    int deletePlayer(SQLiteDatabase db, Player player);
 
 }
