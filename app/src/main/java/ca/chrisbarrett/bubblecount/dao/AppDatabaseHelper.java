@@ -128,7 +128,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
             cursor = db.query(Feeder.GameResultFeed.TABLE_NAME,
                     new String[]{Feeder.GameResultFeed._ID, Feeder.GameResultFeed.COLUMN_TIME_RESULT,
                             Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
-                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID,Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
+                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID, Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
                     Feeder.GameResultFeed._ID + "+ ?",
                     new String[]{Long.toString(id)},
                     null, null, null);
@@ -251,20 +251,20 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
             cursor = db.query(Feeder.GameResultFeed.TABLE_NAME,
                     new String[]{Feeder.GameResultFeed._ID, Feeder.GameResultFeed.COLUMN_TIME_RESULT,
                             Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
-                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID,Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
+                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID, Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
                     Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID + "+ ?",
                     new String[]{Long.toString(playerId)},
                     null, null, null);
 
             cursor.moveToFirst();
-            do{
+            do {
                 results.add(new GameResult(cursor.getLong(0),
                         cursor.getInt(1),
                         Feeder.dateFromDatabaseFormat(cursor.getString(2)),
                         Feeder.dateFromDatabaseFormat(cursor.getString(3)),
                         cursor.getLong(4),
                         cursor.getLong(5)));
-            }while(cursor.moveToNext());
+            } while (cursor.moveToNext());
         } catch (SQLException e) {
             Log.e(TAG, "getAllGamesResultsForPlayer caused: " + e.getMessage());
         } finally {
@@ -286,8 +286,18 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public void deletePlayer(SQLiteDatabase db, Player player) {
-
+    public int deletePlayer(SQLiteDatabase db, Player player) {
+        Log.d(TAG, "Deleting Player " + player);
+        int rows = 0;
+        try {
+            rows = db.delete(Feeder.PlayerFeed.TABLE_NAME,
+                    Feeder.PlayerFeed._ID + " = ?",
+                    new String[]{Long.toString(player.getId())});
+        } catch (SQLException e) {
+            Log.e(TAG, "getAllGamesResultsForPlayer caused: " + e.getMessage());
+        }
+        Log.d(TAG, "Deleted Total Players: " + rows);
+        return rows;
     }
 
     /**
