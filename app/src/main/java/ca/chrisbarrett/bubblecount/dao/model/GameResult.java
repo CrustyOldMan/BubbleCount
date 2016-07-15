@@ -20,12 +20,12 @@ import ca.chrisbarrett.bubblecount.util.Values;
 public class GameResult implements Parcelable {
 
 
-    private int id;                 // pk of the game result
+    private long id;                 // pk of the game result
     private int timeResult;         // time to complete the game
     private Date createdOn;         // date game was played
     private Date syncedOn;         // date the Player was created
-    private int playerId;           // fk of the Player id who played the game
-    private int gameId;             // fk of the Game played
+    private long playerId;           // fk of the Player id who played the game
+    private long gameId;             // fk of the Game played
 
     /**
      * Default constructor
@@ -41,7 +41,7 @@ public class GameResult implements Parcelable {
      * @param playerId
      * @param gameId
      */
-    public GameResult (int timeResult, int playerId, int gameId) {
+    public GameResult (int timeResult, long playerId, long gameId) {
         this(Values.NO_ID, timeResult, Calendar.getInstance().getTime(), null, playerId, gameId);
     }
 
@@ -54,7 +54,7 @@ public class GameResult implements Parcelable {
      * @param playerId
      * @param gameId
      */
-    public GameResult (int id, int timeResult, Date createdOn, Date syncedOn, int playerId, int gameId) {
+    public GameResult (long id, int timeResult, Date createdOn, Date syncedOn, long playerId, long gameId) {
         this.id = id;
         this.timeResult = timeResult;
         this.createdOn = createdOn;
@@ -64,7 +64,7 @@ public class GameResult implements Parcelable {
     }
 
 
-    public int getId () {
+    public long getId () {
         return id;
     }
 
@@ -96,7 +96,7 @@ public class GameResult implements Parcelable {
         this.syncedOn = syncedOn;
     }
 
-    public int getPlayerId () {
+    public long getPlayerId () {
         return playerId;
     }
 
@@ -104,7 +104,7 @@ public class GameResult implements Parcelable {
         this.playerId = playerId;
     }
 
-    public int getGameId () {
+    public long getGameId () {
         return gameId;
     }
 
@@ -124,21 +124,27 @@ public class GameResult implements Parcelable {
 
     }
 
+
     @Override
-    public int hashCode () {
-        int result = timeResult;
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
+        result = 31 * result + timeResult;
         result = 31 * result + (createdOn != null ? createdOn.hashCode() : 0);
+        result = 31 * result + (syncedOn != null ? syncedOn.hashCode() : 0);
+        result = 31 * result + (int) (playerId ^ (playerId >>> 32));
+        result = 31 * result + (int) (gameId ^ (gameId >>> 32));
         return result;
     }
+
     protected GameResult(Parcel in) {
-        id = in.readInt();
+        id = in.readLong();
         timeResult = in.readInt();
         long tmpCreatedOn = in.readLong();
         createdOn = tmpCreatedOn != -1 ? new Date(tmpCreatedOn) : null;
         long tmpSyncedOn = in.readLong();
         syncedOn = tmpSyncedOn != -1 ? new Date(tmpSyncedOn) : null;
-        playerId = in.readInt();
-        gameId = in.readInt();
+        playerId = in.readLong();
+        gameId = in.readLong();
     }
 
     @Override
@@ -160,12 +166,12 @@ public class GameResult implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(id);
+        dest.writeLong(id);
         dest.writeInt(timeResult);
         dest.writeLong(createdOn != null ? createdOn.getTime() : -1L);
         dest.writeLong(syncedOn != null ? syncedOn.getTime() : -1L);
-        dest.writeInt(playerId);
-        dest.writeInt(gameId);
+        dest.writeLong(playerId);
+        dest.writeLong(gameId);
     }
 
     @SuppressWarnings("unused")
