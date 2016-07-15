@@ -20,7 +20,7 @@ import ca.chrisbarrett.bubblecount.util.Values;
 
 public class Player  implements Parcelable {
 
-    private int id;                 // pk of the player
+    private long id;                 // pk of the player
     private String name;            // name of the player
     private int yearOfBirth;        // year of birth of the player
     private Date createdOn;         // date the Player was created
@@ -53,7 +53,7 @@ public class Player  implements Parcelable {
      * @param createdOn
      * @param syncedOn
      */
-    public Player (int id, String name, int yearOfBirth, Date createdOn, Date syncedOn) {
+    public Player (long id, String name, int yearOfBirth, Date createdOn, Date syncedOn) {
         this.id = id;
         this.name = name;
         this.yearOfBirth = yearOfBirth;
@@ -63,11 +63,11 @@ public class Player  implements Parcelable {
 
 
 
-    public int getId () {
+    public long getId () {
         return id;
     }
 
-    public void setId (int id) {
+    public void setId (long id) {
         this.id = id;
     }
 
@@ -118,11 +118,12 @@ public class Player  implements Parcelable {
     }
 
     @Override
-    public int hashCode () {
-        int result = id;
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
         result = 31 * result + (name != null ? name.hashCode() : 0);
         result = 31 * result + yearOfBirth;
         result = 31 * result + (createdOn != null ? createdOn.hashCode() : 0);
+        result = 31 * result + (syncedOn != null ? syncedOn.hashCode() : 0);
         return result;
     }
 
@@ -138,7 +139,7 @@ public class Player  implements Parcelable {
     }
 
     protected Player(Parcel in) {
-        id = in.readInt();
+        id = in.readLong();
         name = in.readString();
         yearOfBirth = in.readInt();
         long tmpCreatedOn = in.readLong();
@@ -154,7 +155,7 @@ public class Player  implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(id);
+        dest.writeLong(id);
         dest.writeString(name);
         dest.writeInt(yearOfBirth);
         dest.writeLong(createdOn != null ? createdOn.getTime() : -1L);
