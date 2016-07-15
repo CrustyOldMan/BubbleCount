@@ -3,6 +3,7 @@ package ca.chrisbarrett.bubblecount.dao;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -11,7 +12,9 @@ import android.util.Log;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import ca.chrisbarrett.bubblecount.dao.model.Game;
 import ca.chrisbarrett.bubblecount.dao.model.GameResult;
@@ -85,7 +88,39 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public Player getPlayerById(SQLiteDatabase db, int id) {
+    public Player getPlayerById(SQLiteDatabase db, long id) {
+        Log.d(TAG, "Retrieving Player " + id);
+        Player player = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.PlayerFeed.TABLE_NAME,
+                    new String[]{Feeder.PlayerFeed._ID, Feeder.PlayerFeed.COLUMN_NAME,
+                            Feeder.PlayerFeed.COLUMN_YEAR_OF_BIRTH, Feeder.PlayerFeed.COLUMN_CREATED_ON,
+                            Feeder.PlayerFeed.COLUMN_SYNCED_ON},
+                    Feeder.PlayerFeed._ID + "+ ?",
+                    new String[]{Long.toString(id)},
+                    null, null, null);
+            if (cursor.moveToFirst()) {
+                player = new Player(cursor.getLong(0),
+                        cursor.getString(1),
+                        cursor.getInt(2),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(4)));
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, "getPlayerById caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning Player: " + player.toString());
+        return player;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public GameResult getGameResultById(SQLiteDatabase db, long id) {
         return null;
     }
 
@@ -93,40 +128,98 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public GameResult getGameResultById(SQLiteDatabase db, int id) {
+    public Game getGameById(SQLiteDatabase db, long id) {
+        Log.d(TAG, "Retrieving Game " + id);
+        Game game = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.GameFeed.TABLE_NAME,
+                    new String[]{Feeder.GameFeed._ID, Feeder.GameFeed.COLUMN_DISPLAY_NAME,
+                            Feeder.GameFeed.COLUMN_CLASSPATH_NAME, Feeder.GameFeed.COLUMN_MINIMUM_AGE},
+                    Feeder.GameFeed._ID + "+ ?",
+                    new String[]{Long.toString(id)},
+                    null, null, null);
+            if (cursor.moveToFirst()) {
+                game = new Game(cursor.getLong(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getInt(3));
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, "getGameById caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning Game: " + game.toString());
+        return game;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<Game> getAllGames(SQLiteDatabase db) {
+        Log.d(TAG, "Retrieving All Games");
+        List<Game> games = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.GameFeed.TABLE_NAME,
+                    new String[]{Feeder.GameFeed._ID, Feeder.GameFeed.COLUMN_DISPLAY_NAME,
+                            Feeder.GameFeed.COLUMN_CLASSPATH_NAME, Feeder.GameFeed.COLUMN_MINIMUM_AGE},
+                    null, null, null, null, null);
+            cursor.moveToFirst();
+            do {
+                games.add(new Game(cursor.getLong(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getInt(3)));
+            } while (cursor.moveToNext());
+        } catch (SQLException e) {
+            Log.e(TAG, "getAllGames caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning Games: " + games.toString());
+        return games;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<Player> getAllPlayers(SQLiteDatabase db) {
+        Log.d(TAG, "Retrieving All Players");
+        List<Player> players = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.PlayerFeed.TABLE_NAME,
+                    new String[]{Feeder.PlayerFeed._ID, Feeder.PlayerFeed.COLUMN_NAME,
+                            Feeder.PlayerFeed.COLUMN_YEAR_OF_BIRTH, Feeder.PlayerFeed.COLUMN_CREATED_ON,
+                            Feeder.PlayerFeed.COLUMN_SYNCED_ON},
+                    null, null, null, null, null);
+            cursor.moveToFirst();
+            do {
+                players.add(new Player(cursor.getLong(0),
+                        cursor.getString(1),
+                        cursor.getInt(2),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(4))));
+            } while (cursor.moveToNext());
+        } catch (SQLException e) {
+            Log.e(TAG, "getAllPlayers caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning Players: " + players.toString());
+        return players;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<GameResult> getAllGamesResultsForPlayer(SQLiteDatabase db, long playerId) {
         return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public Game getGameById(SQLiteDatabase db, int id) {
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public Game[] getAllGames(SQLiteDatabase db) {
-        return new Game[0];
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public Player[] getAllPlayers(SQLiteDatabase db) {
-        return new Player[0];
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public GameResult[] getAllGamesResultsForPlayer(SQLiteDatabase db, int playerId) {
-        return new GameResult[0];
     }
 
     /**
@@ -134,14 +227,6 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      **/
     @Override
     public void updatePlayer(SQLiteDatabase db, Player player) {
-
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public void deletePlayerById(SQLiteDatabase db, int id) {
 
     }
 
@@ -259,7 +344,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                 Log.e(TAG, "String parameter is null.");
                 throw new IllegalArgumentException("String parameter is null.");
             } catch (ParseException e) {
-                String message = String.format("String parameter %s caused: %s", input, e.getMessage());
+                String message = String.format("dateFromDatabaseFormat String parameter '%s' caused: %s", input, e.getMessage());
                 Log.e(TAG, message);
                 return null;
             }
@@ -280,7 +365,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
             try {
                 string = formatter.format(date);
             } catch (NullPointerException e) {
-                Log.e(TAG, "Date parameter is null.");
+                Log.e(TAG, "dateToDatabaseFormat Date parameter is null.");
                 return "";
             }
             return string;
