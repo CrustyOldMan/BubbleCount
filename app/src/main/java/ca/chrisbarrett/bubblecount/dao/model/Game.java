@@ -17,7 +17,7 @@ import ca.chrisbarrett.bubblecount.util.Values;
 
 public class Game implements Parcelable {
 
-    private int id;                     // pk of the game
+    private long id;                     // pk of the game
     private String displayName;         // displays the name of the game
     private String classPathName;       // class path to the game
     private int minimumAge;             // minimum age of the game
@@ -25,7 +25,7 @@ public class Game implements Parcelable {
     /**
      * Default constructor.
      */
-    public Game () {
+    public Game() {
         this(Values.NO_ID, null, null, Values.NO_ID);
     }
 
@@ -36,7 +36,7 @@ public class Game implements Parcelable {
      * @param classPathName
      * @param minimumAge    the minimum age required for the game
      */
-    public Game (String displayName, String classPathName, int minimumAge) {
+    public Game(String displayName, String classPathName, int minimumAge) {
         this(Values.NO_ID, displayName, classPathName, minimumAge);
     }
 
@@ -48,7 +48,7 @@ public class Game implements Parcelable {
      * @param classPathName
      * @param minimumAge
      */
-    public Game (int id, String displayName, String classPathName, int minimumAge) {
+    public Game(long id, String displayName, String classPathName, int minimumAge) {
         this.id = id;
         this.displayName = displayName;
         this.classPathName = classPathName;
@@ -56,47 +56,47 @@ public class Game implements Parcelable {
     }
 
 
-    public int getId () {
+    public long getId() {
         return id;
     }
 
-    public void setId (int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public String getDisplayName () {
+    public String getDisplayName() {
         return displayName;
     }
 
-    public void setDisplayName (String displayName) {
+    public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
 
-    public String getClassPathName () {
+    public String getClassPathName() {
         return classPathName;
     }
 
-    public void setClassPathName (String classPathName) {
+    public void setClassPathName(String classPathName) {
         this.classPathName = classPathName;
     }
 
-    public int getMinimumAge () {
+    public int getMinimumAge() {
         return minimumAge;
     }
 
-    public void setMinimumAge (int minimumAge) {
+    public void setMinimumAge(int minimumAge) {
         this.minimumAge = minimumAge;
     }
 
     protected Game(Parcel in) {
-        id = in.readInt();
+        id = in.readLong();
         displayName = in.readString();
         classPathName = in.readString();
         minimumAge = in.readInt();
     }
 
     @Override
-    public boolean equals (Object o) {
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
@@ -111,8 +111,8 @@ public class Game implements Parcelable {
     }
 
     @Override
-    public int hashCode () {
-        int result = id;
+    public int hashCode() {
+        int result = (int) (id ^ (id >>> 32));
         result = 31 * result + (displayName != null ? displayName.hashCode() : 0);
         result = 31 * result + (classPathName != null ? classPathName.hashCode() : 0);
         result = 31 * result + minimumAge;
@@ -120,7 +120,7 @@ public class Game implements Parcelable {
     }
 
     @Override
-    public String toString () {
+    public String toString() {
         return "Game{" +
                 "id=" + id +
                 ", displayName='" + displayName + '\'' +
@@ -136,7 +136,7 @@ public class Game implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(id);
+        dest.writeLong(id);
         dest.writeString(displayName);
         dest.writeString(classPathName);
         dest.writeInt(minimumAge);
