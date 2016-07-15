@@ -29,7 +29,7 @@ import ca.chrisbarrett.bubblecount.game.GameEngine;
  * <li>
  * <ul>{@link Feeder.PlayerFeed} PlayerFeed table</ul>
  * <ul>{@link Feeder.GameFeed} GameFeed table</ul>
- * <ul>{@link Feeder.GameResultFeeder} GameResultFeeder table</ul>
+ * <ul>{@link Feeder.GameResultFeed} GameResultFeed table</ul>
  * </li>
  *
  * @author Chris Barrett
@@ -64,8 +64,8 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
             db.execSQL(Feeder.PlayerFeed.SQL_CREATE_ENTRIES);
             Log.d(TAG, Feeder.GameFeed.SQL_CREATE_ENTRIES);
             db.execSQL(Feeder.GameFeed.SQL_CREATE_ENTRIES);
-            Log.d(TAG, Feeder.GameResultFeeder.SQL_CREATE_ENTRIES);
-            db.execSQL(Feeder.GameResultFeeder.SQL_CREATE_ENTRIES);
+            Log.d(TAG, Feeder.GameResultFeed.SQL_CREATE_ENTRIES);
+            db.execSQL(Feeder.GameResultFeed.SQL_CREATE_ENTRIES);
             insertGamesAtCreation(db);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage());
@@ -76,7 +76,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL(Feeder.PlayerFeed.SQL_DELETE_ENTRIES);
         db.execSQL(Feeder.GameFeed.SQL_DELETE_ENTRIES);
-        db.execSQL(Feeder.GameResultFeeder.SQL_DELETE_ENTRIES);
+        db.execSQL(Feeder.GameResultFeed.SQL_DELETE_ENTRIES);
         onCreate(db);
     }
 
@@ -121,7 +121,32 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      **/
     @Override
     public GameResult getGameResultById(SQLiteDatabase db, long id) {
-        return null;
+        Log.d(TAG, "Retrieving GameResult " + id);
+        GameResult gameResult = null;
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.GameResultFeed.TABLE_NAME,
+                    new String[]{Feeder.GameResultFeed._ID, Feeder.GameResultFeed.COLUMN_TIME_RESULT,
+                            Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
+                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID,Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
+                    Feeder.GameResultFeed._ID + "+ ?",
+                    new String[]{Long.toString(id)},
+                    null, null, null);
+            if (cursor.moveToFirst()) {
+                gameResult = new GameResult(cursor.getLong(0),
+                        cursor.getInt(1),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(2)),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                        cursor.getLong(4),
+                        cursor.getLong(5));
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, "getGameResultById caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning GameResult: " + gameResult.toString());
+        return gameResult;
     }
 
     /**
@@ -219,7 +244,34 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      **/
     @Override
     public List<GameResult> getAllGamesResultsForPlayer(SQLiteDatabase db, long playerId) {
-        return null;
+        Log.d(TAG, "Retrieving GameResults for Player " + playerId);
+        List<GameResult> results = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.GameResultFeed.TABLE_NAME,
+                    new String[]{Feeder.GameResultFeed._ID, Feeder.GameResultFeed.COLUMN_TIME_RESULT,
+                            Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
+                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID,Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
+                    Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID + "+ ?",
+                    new String[]{Long.toString(playerId)},
+                    null, null, null);
+
+            cursor.moveToFirst();
+            do{
+                results.add(new GameResult(cursor.getLong(0),
+                        cursor.getInt(1),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(2)),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                        cursor.getLong(4),
+                        cursor.getLong(5)));
+            }while(cursor.moveToNext());
+        } catch (SQLException e) {
+            Log.e(TAG, "getAllGamesResultsForPlayer caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning GameResults: " + results.toString());
+        return results;
     }
 
     /**
@@ -234,15 +286,23 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
+    public void deletePlayer(SQLiteDatabase db, Player player) {
+
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
     public long insertGameResult(SQLiteDatabase db, GameResult result) {
         Log.d(TAG, "Inserting to database GameResult: " + result.toString());
         ContentValues values = new ContentValues();
-        values.put(Feeder.GameResultFeeder.COLUMN_TIME_RESULT, result.getTimeResult());
-        values.put(Feeder.GameResultFeeder.COLUMN_CREATED_ON, Feeder.dateToDatabaseFormat(result.getCreatedOn()));
-        values.put(Feeder.GameResultFeeder.COLUMN_SYNCED_ON, Feeder.dateToDatabaseFormat(result.getSyncedOn()));
-        values.put(Feeder.GameResultFeeder.COLUMN_FK_GAME_ID, result.getGameId());
-        values.put(Feeder.GameResultFeeder.COLUMN_FK_PLAYER_ID, result.getPlayerId());
-        long id = db.insert(Feeder.GameResultFeeder.TABLE_NAME, null, values);
+        values.put(Feeder.GameResultFeed.COLUMN_TIME_RESULT, result.getTimeResult());
+        values.put(Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.dateToDatabaseFormat(result.getCreatedOn()));
+        values.put(Feeder.GameResultFeed.COLUMN_SYNCED_ON, Feeder.dateToDatabaseFormat(result.getSyncedOn()));
+        values.put(Feeder.GameResultFeed.COLUMN_FK_GAME_ID, result.getGameId());
+        values.put(Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID, result.getPlayerId());
+        long id = db.insert(Feeder.GameResultFeed.TABLE_NAME, null, values);
         Log.d(TAG, "Success! Created GameResult in record location: " + id);
         return id;
     }
@@ -421,7 +481,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
         /**
          * Feeds the GameResult table
          */
-        public static abstract class GameResultFeeder implements BaseColumns {
+        public static abstract class GameResultFeed implements BaseColumns {
 
             public static final String TABLE_NAME = "game_result";
             public static final String COLUMN_TIME_RESULT = "time_result";
@@ -431,21 +491,21 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
             public static final String COLUMN_FK_GAME_ID = "fk_game_id";
 
             private static final String SQL_CREATE_ENTRIES =
-                    "CREATE TABLE " + GameResultFeeder.TABLE_NAME + " (" +
-                            GameResultFeeder._ID + " INTEGER PRIMARY KEY," +
-                            GameResultFeeder.COLUMN_TIME_RESULT + INTEGER_TYPE + COMMA_SEP +
-                            GameResultFeeder.COLUMN_CREATED_ON + TEXT_TYPE + COMMA_SEP +
-                            GameResultFeeder.COLUMN_SYNCED_ON + TEXT_TYPE + COMMA_SEP +
-                            GameResultFeeder.COLUMN_FK_PLAYER_ID + INTEGER_TYPE + COMMA_SEP +
-                            GameResultFeeder.COLUMN_FK_GAME_ID + INTEGER_TYPE + COMMA_SEP +
-                            FOREIGN_KEY + GameResultFeeder.COLUMN_FK_PLAYER_ID + BRACKET_CLOSE +
+                    "CREATE TABLE " + GameResultFeed.TABLE_NAME + " (" +
+                            GameResultFeed._ID + " INTEGER PRIMARY KEY," +
+                            GameResultFeed.COLUMN_TIME_RESULT + INTEGER_TYPE + COMMA_SEP +
+                            GameResultFeed.COLUMN_CREATED_ON + TEXT_TYPE + COMMA_SEP +
+                            GameResultFeed.COLUMN_SYNCED_ON + TEXT_TYPE + COMMA_SEP +
+                            GameResultFeed.COLUMN_FK_PLAYER_ID + INTEGER_TYPE + COMMA_SEP +
+                            GameResultFeed.COLUMN_FK_GAME_ID + INTEGER_TYPE + COMMA_SEP +
+                            FOREIGN_KEY + GameResultFeed.COLUMN_FK_PLAYER_ID + BRACKET_CLOSE +
                             REFERENCES + PlayerFeed.TABLE_NAME + BRACKET_OPEN + PlayerFeed._ID + BRACKET_CLOSE + COMMA_SEP +
-                            FOREIGN_KEY + GameResultFeeder.COLUMN_FK_GAME_ID + BRACKET_CLOSE +
+                            FOREIGN_KEY + GameResultFeed.COLUMN_FK_GAME_ID + BRACKET_CLOSE +
                             REFERENCES + GameFeed.TABLE_NAME + BRACKET_OPEN + GameFeed._ID + BRACKET_CLOSE +
                             " )";
 
             private static final String SQL_DELETE_ENTRIES =
-                    "DROP TABLE IF EXISTS " + GameResultFeeder.TABLE_NAME;
+                    "DROP TABLE IF EXISTS " + GameResultFeed.TABLE_NAME;
         }
     }
 }
