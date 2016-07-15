@@ -2,6 +2,7 @@ package ca.chrisbarrett.bubblecount;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +11,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
 
+import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
+import ca.chrisbarrett.bubblecount.dao.model.GameResult;
+import ca.chrisbarrett.bubblecount.dao.model.Player;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
 import ca.chrisbarrett.bubblecount.util.Values;
 
@@ -48,14 +52,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         MUSIC_MANAGER.setOnBackgroundMusicListener(this);
         Button buttonGamePlay = (Button) findViewById(R.id.button_main_game);
-        if (buttonGamePlay!=null){
+        if (buttonGamePlay != null) {
             buttonGamePlay.setOnClickListener(this);
         }
         Button buttonSettings = (Button) findViewById(R.id.button_main_settings);
-        if (buttonSettings != null){
+        if (buttonSettings != null) {
             buttonSettings.setOnClickListener(this);
         }
         toggleMusic = (ToggleButton) findViewById(R.id.togglebutton_main_music);
+
+        testDatabase();
     }
 
     @Override
@@ -186,8 +192,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), false)));
     }
 
-    //
-    // Inner classes begin here
-    //
 
+    void testDatabase() {
+        Log.d(TAG, "Testing player insertion");
+        Player player = new Player("Chris", 1974);
+        AppDatabaseHelper databaseHelper = new AppDatabaseHelper(this);
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        databaseHelper.insertPlayer(db, player);
+        GameResult gameResult = new GameResult(1000, 1, 1);
+        databaseHelper.insertGameResult(db,gameResult);
+
+
+    }
 }

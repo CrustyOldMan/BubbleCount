@@ -1,5 +1,6 @@
 package ca.chrisbarrett.bubblecount;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -64,9 +65,9 @@ public class GameActivity extends AppCompatActivity implements GameView.OnGameVi
      */
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         Log.d(TAG, "Back button pressed. Making sure isContinueMusic continues.");
         isContinueMusic = true;
+        super.onBackPressed();
     }
 
     //
@@ -93,7 +94,13 @@ public class GameActivity extends AppCompatActivity implements GameView.OnGameVi
     public void onGameEnd(long time) {
         Log.d(TAG, "Received notification game is done. Total time: " + time);
         isContinueMusic = true;
-        onPause();
-        finish();
+        // TODO - Save to the database.
+        setResult(Activity.RESULT_OK);
     }
+
+    //
+    // Helper methods begin here
+    //
+
+
 }

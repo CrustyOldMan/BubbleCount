@@ -21,7 +21,7 @@ import ca.chrisbarrett.bubblecount.game.GameEngine;
 /**
  * Helper class for the database. This class handles creation and upgrades of the database and
  * tables. Contract related material is available via the {@link ca.chrisbarrett.bubblecount.dao
- * .DatabaseHelper.Feeder} inner class, which has it's own inner classes corresponding to each
+ * .AppDatabaseHelper.Feeder} inner class, which has it's own inner classes corresponding to each
  * table:
  * <li>
  * <ul>{@link Feeder.PlayerFeed} PlayerFeed table</ul>
@@ -33,99 +33,169 @@ import ca.chrisbarrett.bubblecount.game.GameEngine;
  * @see
  * @since Jul 10, 2016
  */
-public class DatabaseHelper extends SQLiteOpenHelper {
+public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
 
     public final static int DB_VERSION = 1;     // current database version
-    private static final String TAG = "DatabaseHelper";
+    private static final String TAG = "AppDatabaseHelper";
 
     //
     // LifeCycles Events Begin Here
     //
 
     /**
-     * Constructor for the DatabaseHelper. Creates a database, if required and checks for
+     * Constructor for the AppDatabaseHelper. Creates a database, if required and checks for
      * upgrade/downgrade requirements
      *
      * @param context
      */
-    public DatabaseHelper (Context context) {
+    public AppDatabaseHelper(Context context) {
         super(context, Feeder.DB_NAME, null, DB_VERSION);
 
     }
 
     @Override
-    public void onCreate (SQLiteDatabase db) {
+    public void onCreate(SQLiteDatabase db) {
         Log.d(TAG, "Attempting to create database tables...");
         try {
             Log.d(TAG, Feeder.PlayerFeed.SQL_CREATE_ENTRIES);
-            insertPlayersAtCreation(db);
             db.execSQL(Feeder.PlayerFeed.SQL_CREATE_ENTRIES);
             Log.d(TAG, Feeder.GameFeed.SQL_CREATE_ENTRIES);
             db.execSQL(Feeder.GameFeed.SQL_CREATE_ENTRIES);
-            insertGamesAtCreation(db);
             Log.d(TAG, Feeder.GameResultFeeder.SQL_CREATE_ENTRIES);
             db.execSQL(Feeder.GameResultFeeder.SQL_CREATE_ENTRIES);
+            insertGamesAtCreation(db);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage());
         }
     }
 
     @Override
-    public void onUpgrade (SQLiteDatabase db, int oldVersion, int newVersion) {
-
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL(Feeder.PlayerFeed.SQL_DELETE_ENTRIES);
+        db.execSQL(Feeder.GameFeed.SQL_DELETE_ENTRIES);
+        db.execSQL(Feeder.GameResultFeeder.SQL_DELETE_ENTRIES);
+        onCreate(db);
     }
-
 
     //
     //  Helper methods begin here
     //
 
-
     /**
-     * This method creates Game objects in the database. As Games cannot be created, updated or
-     * deleted by the user, this is is protected.
-     *
-     * @param db
-     * @param game
-     */
-    protected void insertGame (SQLiteDatabase db, Game game) {
-        ContentValues values = new ContentValues();
-        values.put(Feeder.GameFeed.COLUMN_DISPLAY_NAME, game.getDisplayName());
-        values.put(Feeder.GameFeed.COLUMN_CLASSPATH_NAME, game.getClassPathName());
-        values.put(Feeder.GameFeed.COLUMN_MINIMUM_AGE, game.getMinimumAge());
-        db.insert(Feeder.GameFeed.TABLE_NAME, null, values);
+     * {@inheritDoc}
+     **/
+    @Override
+    public Player getPlayerById(SQLiteDatabase db, int id) {
+        return null;
     }
 
     /**
-     * This method creates GameResult objects in the database
-     *
-     * @param db
-     * @param result
-     */
-    public void insertGameResult (SQLiteDatabase db, GameResult result) {
+     * {@inheritDoc}
+     **/
+    @Override
+    public GameResult getGameResultById(SQLiteDatabase db, int id) {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Game getGameById(SQLiteDatabase db, int id) {
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Game[] getAllGames(SQLiteDatabase db) {
+        return new Game[0];
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Player[] getAllPlayers(SQLiteDatabase db) {
+        return new Player[0];
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public GameResult[] getAllGamesResultsForPlayer(SQLiteDatabase db, int playerId) {
+        return new GameResult[0];
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public void updatePlayer(SQLiteDatabase db, Player player) {
+
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public void deletePlayerById(SQLiteDatabase db, int id) {
+
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public long insertGameResult(SQLiteDatabase db, GameResult result) {
+        Log.d(TAG, "Inserting to database GameResult: " + result.toString());
         ContentValues values = new ContentValues();
         values.put(Feeder.GameResultFeeder.COLUMN_TIME_RESULT, result.getTimeResult());
         values.put(Feeder.GameResultFeeder.COLUMN_CREATED_ON, Feeder.dateToDatabaseFormat(result.getCreatedOn()));
         values.put(Feeder.GameResultFeeder.COLUMN_SYNCED_ON, Feeder.dateToDatabaseFormat(result.getSyncedOn()));
         values.put(Feeder.GameResultFeeder.COLUMN_FK_GAME_ID, result.getGameId());
         values.put(Feeder.GameResultFeeder.COLUMN_FK_PLAYER_ID, result.getPlayerId());
-        db.insert(Feeder.GameResultFeeder.TABLE_NAME, null, values);
+        long id = db.insert(Feeder.GameResultFeeder.TABLE_NAME, null, values);
+        Log.d(TAG, "Success! Created GameResult in record location: " + id);
+        return id;
     }
 
     /**
-     * This method created Player objects in the database
-     *
-     * @param db
-     * @param player
-     */
-    public void insertPlayer (SQLiteDatabase db, Player player) {
+     * {@inheritDoc}
+     **/
+    @Override
+    public long insertPlayer(SQLiteDatabase db, Player player) {
+        Log.d(TAG, "Inserting to database Player: " + player.toString());
         ContentValues values = new ContentValues();
         values.put(Feeder.PlayerFeed.COLUMN_NAME, player.getName());
         values.put(Feeder.PlayerFeed.COLUMN_YEAR_OF_BIRTH, player.getYearOfBirth());
         values.put(Feeder.PlayerFeed.COLUMN_CREATED_ON, Feeder.dateToDatabaseFormat(player.getCreatedOn()));
         values.put(Feeder.PlayerFeed.COLUMN_SYNCED_ON, Feeder.dateToDatabaseFormat(player.getSyncedOn()));
-        db.insert(Feeder.PlayerFeed.TABLE_NAME, null, values);
+        long id = db.insert(Feeder.PlayerFeed.TABLE_NAME, null, values);
+        Log.d(TAG, "Success! Created Player in record location: " + id);
+        return id;
+    }
 
+
+    /**
+     * Inserts a Game to the database. As Games can only be inserted into the database during {@link #onCreate(SQLiteDatabase)}
+     * or {@link #onUpgrade(SQLiteDatabase, int, int)}, method is protected.
+     *
+     * @param db
+     * @param game
+     * @return
+     */
+    protected long insertGame(SQLiteDatabase db, Game game) {
+        Log.d(TAG, "Inserting to database Game: " + game.toString());
+        ContentValues values = new ContentValues();
+        values.put(Feeder.GameFeed.COLUMN_DISPLAY_NAME, game.getDisplayName());
+        values.put(Feeder.GameFeed.COLUMN_CLASSPATH_NAME, game.getClassPathName());
+        values.put(Feeder.GameFeed.COLUMN_MINIMUM_AGE, game.getMinimumAge());
+        long id = db.insert(Feeder.GameFeed.TABLE_NAME, null, values);
+        Log.d(TAG, "Success! Created Game in record location: " + id);
+        return id;
     }
 
     /**
@@ -133,23 +203,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      *
      * @param db
      */
-    protected void insertGamesAtCreation (SQLiteDatabase db) {
+    protected void insertGamesAtCreation(SQLiteDatabase db) {
+        Log.d(TAG, "insertGamesAtCreation attempting to store known Games.");
         Game game = new Game("Letter Sequence", "ca.chrisbarrett.bubblecount.game.AlphabetGameEngine", GameEngine.NO_MINIMUM_AGE);
         insertGame(db, game);
         game = new Game("Number Sequence", "ca.chrisbarrett.bubblecount.game.CountGameEngine", GameEngine.NO_MINIMUM_AGE);
         insertGame(db, game);
     }
-
-    /**
-     * Inserts a test Player into the database at database creation.
-     *
-     * @param db
-     */
-    protected void insertPlayersAtCreation (SQLiteDatabase db) {
-        Player player = new Player("Chris", 1974);
-        insertPlayer(db, player);
-    }
-
 
     //
     // Inner classes begin here
@@ -174,11 +234,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         private static final String TEXT_TYPE = " TEXT ";        // also used for dates
         private static final String BRACKET_OPEN = " ( ";
         private static final String BRACKET_CLOSE = " ) ";
-        private static final String REFERENCES = " ) REFERENCES ( ";
+        private static final String REFERENCES = " REFERENCES ";
         private static final String COMMA_SEP = ",";
         private static final String FOREIGN_KEY = " FOREIGN KEY ( ";
 
-        private Feeder () {
+        private Feeder() {
             // to stop instantiation
         }
 
@@ -190,8 +250,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
          * @return a well-formed Date object
          * @throws IllegalArgumentException
          */
-        public static Date dateFromDatabaseFormat (String input) throws
-                IllegalArgumentException {
+        public static Date dateFromDatabaseFormat(String input) {
             SimpleDateFormat formatter = new SimpleDateFormat(FORMAT_DATE_TIME);
             Date date = null;
             try {
@@ -202,7 +261,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             } catch (ParseException e) {
                 String message = String.format("String parameter %s caused: %s", input, e.getMessage());
                 Log.e(TAG, message);
-                throw new IllegalArgumentException(message);
+                return null;
             }
             return date;
         }
@@ -215,14 +274,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
          * @return a well-formed String ready for storage in the database
          * @throws IllegalArgumentException
          */
-        public static String dateToDatabaseFormat (Date date) throws IllegalArgumentException {
+        public static String dateToDatabaseFormat(Date date) {
             SimpleDateFormat formatter = new SimpleDateFormat(FORMAT_DATE_TIME);
             String string = null;
             try {
                 string = formatter.format(date);
             } catch (NullPointerException e) {
                 Log.e(TAG, "Date parameter is null.");
-                throw new IllegalArgumentException("Date parameter is null.");
+                return "";
             }
             return string;
         }
@@ -243,8 +302,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             PlayerFeed._ID + " INTEGER PRIMARY KEY," +
                             PlayerFeed.COLUMN_NAME + TEXT_TYPE + COMMA_SEP +
                             PlayerFeed.COLUMN_YEAR_OF_BIRTH + INTEGER_TYPE + COMMA_SEP +
-                            PlayerFeed.COLUMN_CREATED_ON + TEXT_TYPE +
-                            PlayerFeed.COLUMN_SYNCED_ON + TEXT_TYPE + COMMA_SEP +
+                            PlayerFeed.COLUMN_CREATED_ON + TEXT_TYPE + COMMA_SEP +
+                            PlayerFeed.COLUMN_SYNCED_ON + TEXT_TYPE +
                             " )";
 
             private static final String SQL_DELETE_ENTRIES =
@@ -294,10 +353,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                             GameResultFeeder.COLUMN_SYNCED_ON + TEXT_TYPE + COMMA_SEP +
                             GameResultFeeder.COLUMN_FK_PLAYER_ID + INTEGER_TYPE + COMMA_SEP +
                             GameResultFeeder.COLUMN_FK_GAME_ID + INTEGER_TYPE + COMMA_SEP +
-                            FOREIGN_KEY + GameResultFeeder.COLUMN_FK_PLAYER_ID +
-                            REFERENCES + PlayerFeed._ID + BRACKET_CLOSE + COMMA_SEP +
-                            FOREIGN_KEY + GameResultFeeder.COLUMN_FK_GAME_ID +
-                            REFERENCES + GameFeed._ID + BRACKET_CLOSE +
+                            FOREIGN_KEY + GameResultFeeder.COLUMN_FK_PLAYER_ID + BRACKET_CLOSE +
+                            REFERENCES + PlayerFeed.TABLE_NAME + BRACKET_OPEN + PlayerFeed._ID + BRACKET_CLOSE + COMMA_SEP +
+                            FOREIGN_KEY + GameResultFeeder.COLUMN_FK_GAME_ID + BRACKET_CLOSE +
+                            REFERENCES + GameFeed.TABLE_NAME + BRACKET_OPEN + GameFeed._ID + BRACKET_CLOSE +
                             " )";
 
             private static final String SQL_DELETE_ENTRIES =
