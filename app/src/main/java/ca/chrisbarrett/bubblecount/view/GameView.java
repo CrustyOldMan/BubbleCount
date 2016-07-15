@@ -154,14 +154,16 @@ public class GameView extends SurfaceView implements Runnable {
      */
     @Override
     public void run() {
-        Log.d(TAG, "Run is Running: " + isRunning);
+        Log.d(TAG, "Setting up the game...");
         prepareGame();
+        Log.d(TAG, "Run is Running: " + isRunning);
         startTime = System.currentTimeMillis();
         while (isRunning) {
             update();
             draw();
         }
-        gameEnd();
+        Log.d(TAG, "Closing down...");
+        gameOver();
     }
 
     //
@@ -194,7 +196,7 @@ public class GameView extends SurfaceView implements Runnable {
                     Sprite sprite = spriteIterator.next();
                     if (sprite.isCollision(x, y)) {
                         if (gameEngineAnswer.equals(sprite.getText())) {
-                            isRunning=false;
+                            isRunning = false;
                             break;
                         } else {
                             sprite.setVisibility(false);
@@ -280,9 +282,9 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     /**
-     * Run when the game ends. Stores the time and returns to the calling Activity.
+     * Run when the game ends. Stores the time and fires the onGameEnd to the calling Activity.
      */
-    protected void gameEnd() {
+    protected void gameOver() {
         Log.d(TAG, "Game End called. Shutting down...");
         long totalTime = System.currentTimeMillis() - startTime;
         gameListener.onGameEnd(totalTime);
@@ -295,7 +297,7 @@ public class GameView extends SurfaceView implements Runnable {
     public interface OnGameViewListener {
 
         /**
-         * gameEnd is called when a game has ended
+         * onGameEnd is called when a game has ended
          *
          * @param time the total time in milliseconds that the game took
          */
