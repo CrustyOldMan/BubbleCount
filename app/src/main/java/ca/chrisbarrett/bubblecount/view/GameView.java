@@ -67,8 +67,11 @@ public class GameView extends SurfaceView implements Runnable {
     private String gameEngineAnswer;
     private OnGameViewListener gameListener;
 
-    private long startTime;
+    private long roundStartTime;
+    private long totalTime;
     private volatile boolean isRunning;
+    private volatile boolean isNewRound;
+    private int roundCounter;
     private Set<Sprite> sprites;
 
     /**
@@ -101,12 +104,8 @@ public class GameView extends SurfaceView implements Runnable {
     public GameView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         Log.d(TAG, "Instantiating GameView");
-        this.context = context;
-        gameEngine = new AlphabetGameEngine();
         surfaceHolder = getHolder();
-        textPaint = PaintCache.getTextPainter();
-        textPaint.setTypeface(FontCache.getFont(context));
-        drawPaint = PaintCache.getDrawablePainter();
+        this.context = context;
         try {
             gameListener = (OnGameViewListener) context;
         } catch (ClassCastException e) {
@@ -124,12 +123,8 @@ public class GameView extends SurfaceView implements Runnable {
      */
     public void onResume() {
         Log.d(TAG, "GameView onResume called");
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        screenWidth = metrics.widthPixels;
-        float screenHeight = metrics.heightPixels;
-        gameAreaHeight = screenHeight * VERTICAL_DIVIDE_RATIO;
-        textAreaHeight = screenHeight - gameAreaHeight;
         isRunning = true;
+        isNewRound = true;
         gameThread = new Thread(this);
         gameThread.start();
     }
@@ -155,15 +150,33 @@ public class GameView extends SurfaceView implements Runnable {
     @Override
     public void run() {
         Log.d(TAG, "Setting up the game...");
-        prepareGame();
-        Log.d(TAG, "Run is Running: " + isRunning);
-        startTime = System.currentTimeMillis();
+        // load the game engine
+        gameEngine = new AlphabetGameEngine();
+
+        // setup the painters
+        textPaint = PaintCache.getTextPainter();
+        textPaint.setTypeface(FontCache.getFont(context));
+        drawPaint = PaintCache.getDrawablePainter();
+
+        // determine the screen dimensions and define the two areas
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        screenWidth = metrics.widthPixels;
+        float screenHeight = metrics.heightPixels;
+        gameAreaHeight = screenHeight * VERTICAL_DIVIDE_RATIO;
+        textAreaHeight = screenHeight - gameAreaHeight;
+
+        // looper to run the game on the thread
         while (isRunning) {
+            if (isNewRound) {
+                Log.d(TAG, "Setting up a new round");
+                prepareRound();
+                roundCounter++;
+                isNewRound = false;
+                roundStartTime = System.currentTimeMillis();
+            }
             update();
             draw();
         }
-        Log.d(TAG, "Closing down...");
-        gameOver();
     }
 
     //
@@ -196,7 +209,7 @@ public class GameView extends SurfaceView implements Runnable {
                     Sprite sprite = spriteIterator.next();
                     if (sprite.isCollision(x, y)) {
                         if (gameEngineAnswer.equals(sprite.getText())) {
-                            isRunning = false;
+                            checkGameState();
                             break;
                         } else {
                             sprite.setVisibility(false);
@@ -238,7 +251,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     /**
-     * Sets up the level in the background. Positions the Sprites randomly in the defined area for
+     * Sets up the round in the background. Positions the Sprites randomly in the defined area for
      * Sprites.
      * <p/>
      * Brute force is used to make sure the Sprites do not overlap. {@value GameView#SPRITE_PLACEMENT_ATTEMPTS}
@@ -248,7 +261,7 @@ public class GameView extends SurfaceView implements Runnable {
      * The total number of Sprites will be the lesser of the size of {@link GameEngine#getCorrectElement()}
      * and {@link #MAX_SPRITES}
      */
-    protected void prepareGame() {
+    protected void prepareRound() {
         gameEngine.randomize();
         gameEngineAnswer = gameEngine.getCorrectElement();
         gameEngineQuestion = gameEngine.getQuestion();
@@ -281,13 +294,21 @@ public class GameView extends SurfaceView implements Runnable {
         Log.d(TAG, "Preparing Round is complete.");
     }
 
+
     /**
-     * Run when the game ends. Stores the time and fires the onGameEnd to the calling Activity.
+     * Helper method to check the state of the game. IF the roundCounter hasn't yet hit {@link #MAX_ROUNDS},
+     * then a new round will begin. Otherwise, the game will shutdown and return to the calling
+     * Activity the totalTime.
      */
-    protected void gameOver() {
-        Log.d(TAG, "Game End called. Shutting down...");
-        long totalTime = System.currentTimeMillis() - startTime;
-        gameListener.onGameEnd(totalTime);
+    protected void checkGameState() {
+        totalTime = System.currentTimeMillis() - roundStartTime;
+        if (roundCounter < MAX_ROUNDS) {
+            isNewRound = true;
+        } else {
+            Log.d(TAG, "Game End called. Shutting down...");
+            gameListener.onGameEnd(totalTime);
+            isRunning = false;
+        }
     }
 
     /**

@@ -15,16 +15,18 @@ public final class Values {
     private Values (){}
 
     /**
-     * Contains tags used during Extra persistence
+     * Contains tags used during Extras
      */
     public static abstract class  Extra {
+        public static final String GAME_SELECTOR = "GAME_SELECTOR";
+
 
     }
 
     /**
-     * Contains tags used during startActivityForResult ResultCode values
+     * Contains tags used during startActivityForResult ResultRequest values
      */
-    public static abstract class ResultCode {
+    public static abstract class ResultRequest {
         public static final int ACTIVITY_GAME = 2000;       // Used for starting GameActivity
         public static final int ACTIVITY_SETTINGS = 1000;   // Used for starting SettingsActivity
     }
