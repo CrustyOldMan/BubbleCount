@@ -1,15 +1,21 @@
 package ca.chrisbarrett.bubblecount;
 
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
+import android.preference.DialogPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.NumberPicker;
+import android.widget.TextView;
 
+import ca.chrisbarrett.bubblecount.dao.model.Player;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
 
 /**
@@ -95,10 +101,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
 
-            if (preference instanceof ListPreference) {
+            if (preference instanceof PlayerDialogPreference){
+                Log.d(TAG, "OnPreferenceChangeListener heard change in PlayerDialogPreference");
+                
+            } else if (preference instanceof ListPreference) {
                 String stringValue = value.toString();
-                Log.d(TAG, "onPause called and releasing MUSIC_MANAGER.");
-
+                Log.d(TAG, "OnPreferenceChangeListener heard change in ListPreference");
 
                 // For list preferences, look up the correct display value in
                 // the preference's 'entries' list.
@@ -159,21 +167,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
     }
 
     /**
-     * Helper method that loads
-     */
-    protected void loadPlayers(){
-
-
-    }
-
-    /**
      * This method stops fragment injection in malicious applications.
      * Make sure to deny any unknown fragments here.
      */
     protected boolean isValidFragment(String fragmentName) {
         return PreferenceFragment.class.getName().equals(fragmentName)
-                || GeneralSettingsFragment.class.getName().equals(fragmentName)
-                || PlayerSettingsFragment.class.getName().equals(fragmentName);
+                || GeneralSettingsFragment.class.getName().equals(fragmentName);
     }
 
     //
@@ -230,26 +229,65 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
     /**
      * Inner class for displaying the PlayerFeed control settings fragment
      */
-    public static class PlayerSettingsFragment extends PreferenceFragment {
+//    public static class PlayerSettingsFragment extends PreferenceFragment {
+//
+//        private static final String TAG = "GeneralSettingsFragment";
+//
+//        @Override
+//        public void onCreate(Bundle savedInstanceState) {
+//            super.onCreate(savedInstanceState);
+//            setHasOptionsMenu(true);
+//        }
+//
+//        @Override
+//        public boolean onOptionsItemSelected(MenuItem item) {
+//            Log.d(TAG, "Menu pressed from PlayerSettingsFragment.");
+//            switch (item.getItemId()) {
+//                case android.R.id.home:
+//                    Log.d(TAG, "Going back...");
+//                    startActivity(new Intent(getActivity(), SettingsActivity.class));
+//                    return true;
+//            }
+//            return super.onOptionsItemSelected(item);
+//        }
+//    }
 
-        private static final String TAG = "GeneralSettingsFragment";
 
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            setHasOptionsMenu(true);
+    /**
+     * This class is a Custom DialogPreference used to display player details
+     */
+    public static class PlayerDialogPreference extends DialogPreference {
+
+        private static final String TAG = "PlayerDialogPreference";
+        private Player player;
+        private TextView tvTitle;
+        private EditText etName;
+        private YearPicker yearPicker;
+
+        public PlayerDialogPreference(Context context, AttributeSet attrs) {
+            super(context, attrs);
+            setDialogLayoutResource(R.layout.preference_player);
+            setPersistent(false);
+            for (int i = 0; i < attrs.getAttributeCount(); i++) {
+                Log.d(TAG, attrs.getAttributeName(i) + ":" + attrs.getAttributeValue(i));
+            }
         }
 
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            Log.d(TAG, "Menu pressed from PlayerSettingsFragment.");
-            switch (item.getItemId()) {
-                case android.R.id.home:
-                    Log.d(TAG, "Going back...");
-                    startActivity(new Intent(getActivity(), SettingsActivity.class));
-                    return true;
+
+        //
+        // Inner classes begin here
+        //
+
+        /**
+         * This class provides a custom year picker for the PlayerFeed
+         */
+        public static class YearPicker extends NumberPicker {
+
+            public YearPicker(Context context, AttributeSet attrs) {
+                super(context, attrs);
             }
-            return super.onOptionsItemSelected(item);
+
+
         }
     }
 }
