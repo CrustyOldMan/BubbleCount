@@ -2,6 +2,8 @@ package ca.chrisbarrett.bubblecount.dao;
 
 import android.database.sqlite.SQLiteDatabase;
 
+import java.util.List;
+
 import ca.chrisbarrett.bubblecount.dao.model.Game;
 import ca.chrisbarrett.bubblecount.dao.model.GameResult;
 import ca.chrisbarrett.bubblecount.dao.model.Player;
@@ -20,7 +22,7 @@ public interface AppDatabase {
      * @param id
      * @return
      */
-    Player getPlayerById(SQLiteDatabase db, int id);
+    Player getPlayerById(SQLiteDatabase db, long id);
 
     /**
      * Gets a GameResult from the database based on the id value
@@ -29,7 +31,7 @@ public interface AppDatabase {
      * @param id
      * @return
      */
-    GameResult getGameResultById(SQLiteDatabase db, int id);
+    GameResult getGameResultById(SQLiteDatabase db, long id);
 
     /**
      * Gets a Game from the database based on the id value
@@ -38,7 +40,7 @@ public interface AppDatabase {
      * @param id
      * @return
      */
-    Game getGameById(SQLiteDatabase db, int id);
+    Game getGameById(SQLiteDatabase db, long id);
 
     /**
      * Gets all Games from the database
@@ -46,7 +48,7 @@ public interface AppDatabase {
      * @param db
      * @return
      */
-    Game[] getAllGames(SQLiteDatabase db);
+    List<Game> getAllGames(SQLiteDatabase db);
 
     /**
      * Gets all Players from the database
@@ -54,16 +56,16 @@ public interface AppDatabase {
      * @param db
      * @return
      */
-    Player[] getAllPlayers(SQLiteDatabase db);
+    List<Player> getAllPlayers(SQLiteDatabase db);
 
     /**
-     * Gets all GamesResults for a Player from the database
+     * Gets all GamesResults from the database
      *
      * @param db
      * @param playerId
      * @return
      */
-    GameResult[] getAllGamesResultsForPlayer(SQLiteDatabase db, int playerId);
+    List<GameResult> getAllGamesResultsForPlayer(SQLiteDatabase db, long playerId);
 
     /**
      * Inserts a Player to the database
@@ -88,13 +90,5 @@ public interface AppDatabase {
      * @param player
      */
     void updatePlayer(SQLiteDatabase db, Player player);
-
-    /**
-     * Deletes a Player from the database based on the id value
-     *
-     * @param db
-     * @param id
-     */
-    void deletePlayerById(SQLiteDatabase db, int id);
 
 }
