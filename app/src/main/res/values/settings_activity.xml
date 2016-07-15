@@ -25,6 +25,12 @@
     <string name="pref_music_toggle_available_summary">Remove the sound toggle from the main page</string>
     <bool name="pref_music_toggle_available_default">true</bool>
 
+    <!-- Configures a Default game -->
+    <string name="pref_game_selector_title">Default Game</string>
+    <string name="pref_game_selector_summary"></string>
+    <integer name="pref_game_selector_default">-1</integer>
+
+
     <!-- Configures the PlayerFeed CRUD controls -->
     <string name="pref_cat_player_management_controls">Player Controls</string>
     <string name="pref_player_create_key">player_create</string>

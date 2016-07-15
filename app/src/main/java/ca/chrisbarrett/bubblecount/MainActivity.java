@@ -2,7 +2,6 @@ package ca.chrisbarrett.bubblecount;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -11,9 +10,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
 
-import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
-import ca.chrisbarrett.bubblecount.dao.model.GameResult;
-import ca.chrisbarrett.bubblecount.dao.model.Player;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
 import ca.chrisbarrett.bubblecount.util.Values;
 
@@ -40,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ToggleButton toggleMusic;
     private boolean isMusicToggleAvailable;
     private boolean isMusicOn;
-
+    private int gameSelector;
 
     //
     // LifeCycles Events Begin Here
@@ -61,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         toggleMusic = (ToggleButton) findViewById(R.id.togglebutton_main_music);
 
-        testDatabase();
+        testSomething();        // TODO - Delete test method when finished
     }
 
     @Override
@@ -93,19 +89,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case Values.ResultCode.ACTIVITY_SETTINGS:
+            case Values.ResultRequest.ACTIVITY_SETTINGS:
                 Log.d(TAG, "Back from SettingsActivity");
-                // Nothing to do here - placeholder for now
-                break;
-            case Values.ResultCode.ACTIVITY_GAME:
-                Log.d(TAG, "Back from GameActivity");
                 if (RESULT_OK == resultCode) {
-                    Log.d(TAG, "Back from GamesActivity");
+                    Log.d(TAG, "Things are OK");
                     // Nothing to do here - placeholder for now
                 } else if (RESULT_CANCELED == resultCode) {
-                    // PlayerFeed didn't finish a game - nothing to do here
+                    Log.d(TAG, "User seems to have canceled...");
+                    // Nothing to do here - placeholder for now
                 }
                 break;
+            case Values.ResultRequest.ACTIVITY_GAME:
+                Log.d(TAG, "Back from GameActivity");
+                if (RESULT_OK == resultCode) {
+                    Log.d(TAG, "Things are OK");
+                    // Nothing to do here - placeholder for now
+                } else if (RESULT_CANCELED == resultCode) {
+                    Log.d(TAG, "User seems to have canceled...");
+                    // Nothing to do here - placeholder for now
+                }
+                break;
+            default:
+                Log.e(TAG, "onActivity() received unknown requestCode: " + requestCode);
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -131,14 +136,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.button_main_game:
                 Log.d(TAG, "GameFeed Button pressed");
                 intent = new Intent(this, GameActivity.class);
+                intent.putExtra(Values.Extra.GAME_SELECTOR, gameSelector);
                 isContinueMusic = true;
-                startActivityForResult(intent, Values.ResultCode.ACTIVITY_GAME);
+                startActivityForResult(intent, Values.ResultRequest.ACTIVITY_GAME);
                 break;
             case R.id.button_main_settings:
                 Log.d(TAG, "Settings Button pressed");
                 intent = new Intent(this, SettingsActivity.class);
                 isContinueMusic = true;
-                startActivityForResult(intent, Values.ResultCode.ACTIVITY_SETTINGS);
+                startActivityForResult(intent, Values.ResultRequest.ACTIVITY_SETTINGS);
                 break;
             case R.id.togglebutton_main_music:
                 isMusicOn = toggleMusic.isChecked();
@@ -169,17 +175,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Helper methods begin here
     //
 
-    /**
-     * This method loads the preferences relevant to this task, using property files for the
-     * defaults
-     */
-    protected void loadRelevantPreferences() {
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isMusicToggleDefault = getResources().getBoolean(R.bool.pref_music_toggle_available_default);
-        isMusicToggleAvailable = sharedPref.getBoolean(getString(R.string.pref_music_toggle_available_key),
-                isMusicToggleDefault);
-        isMusicOn = sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), isMusicToggleAvailable);
-    }
 
     /**
      * This method updates the preference for isMusicOn
@@ -192,16 +187,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), false)));
     }
 
+    /**
+     * This method loads the preferences relevant to this task.
+     */
+    protected void loadRelevantPreferences() {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isMusicToggleDefault = getResources().getBoolean(R.bool.pref_music_toggle_available_default);
+        isMusicToggleAvailable = sharedPref.getBoolean(getString(R.string.pref_music_toggle_available_key),
+                isMusicToggleDefault);
+        isMusicOn = sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), isMusicToggleAvailable);
 
-    void testDatabase() {
-        Log.d(TAG, "Testing player insertion");
-        Player player = new Player("Chris", 1974);
-        AppDatabaseHelper databaseHelper = new AppDatabaseHelper(this);
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        databaseHelper.insertPlayer(db, player);
-        GameResult gameResult = new GameResult(1000, 1, 1);
-        databaseHelper.insertGameResult(db,gameResult);
+        int gameSelectorDefault = getResources().getInteger(R.integer.pref_game_selector_default);
+        gameSelector = sharedPref.getInt(getString(R.string.pref_game_selector_summary), gameSelectorDefault);
+    }
 
+
+    // TODO - Delete test method when finished
+    void testSomething() {
 
     }
 }
