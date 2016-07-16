@@ -21,8 +21,8 @@ public final class Values {
      * Contains tags used during Extras
      */
     public static abstract class  Extra {
-        public static final String GAME_SELECTOR = "GAME_SELECTOR";
-
+        public static final String GAME_ID_SELECTOR = "GAME_ID_SELECTOR";
+        public static final String PLAYER_ID_SELECTOR = "PLAYER_ID_SELECTOR";
 
     }
 
