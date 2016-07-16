@@ -68,6 +68,14 @@ public interface AppDatabase {
     List<GameResult> getAllGamesResultsForPlayer(SQLiteDatabase db, long playerId);
 
     /**
+     * Gets all GameResult from the database
+     * @param db
+     * @return
+     */
+    List<GameResult> getAllGameResults(SQLiteDatabase db);
+
+
+    /**
      * Inserts a Player to the database
      *
      * @param db

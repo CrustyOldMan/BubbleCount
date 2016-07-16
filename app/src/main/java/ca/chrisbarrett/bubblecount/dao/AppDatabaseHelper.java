@@ -97,7 +97,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                     new String[]{Feeder.PlayerFeed._ID, Feeder.PlayerFeed.COLUMN_NAME,
                             Feeder.PlayerFeed.COLUMN_YEAR_OF_BIRTH, Feeder.PlayerFeed.COLUMN_CREATED_ON,
                             Feeder.PlayerFeed.COLUMN_SYNCED_ON},
-                    Feeder.PlayerFeed._ID + "+ ?",
+                    Feeder.PlayerFeed._ID + Feeder.WHERE_EQUALS,
                     new String[]{Long.toString(id)},
                     null, null, null);
             if (cursor.moveToFirst()) {
@@ -129,7 +129,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                     new String[]{Feeder.GameResultFeed._ID, Feeder.GameResultFeed.COLUMN_TIME_RESULT,
                             Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
                             Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID, Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
-                    Feeder.GameResultFeed._ID + "+ ?",
+                    Feeder.GameResultFeed._ID + Feeder.WHERE_EQUALS,
                     new String[]{Long.toString(id)},
                     null, null, null);
             if (cursor.moveToFirst()) {
@@ -149,6 +149,36 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
         return gameResult;
     }
 
+    @Override
+    public List<GameResult> getAllGameResults(SQLiteDatabase db) {
+        Log.d(TAG, "Retrieving All GameResults");
+        List<GameResult> results = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(Feeder.GameResultFeed.TABLE_NAME,
+                    new String[]{Feeder.GameResultFeed._ID, Feeder.GameResultFeed.COLUMN_TIME_RESULT,
+                            Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
+                            Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID, Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
+                    null, null, null, null, null);
+
+            cursor.moveToFirst();
+            do {
+                results.add(new GameResult(cursor.getLong(0),
+                        cursor.getInt(1),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(2)),
+                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                        cursor.getLong(4),
+                        cursor.getLong(5)));
+            } while (cursor.moveToNext());
+        } catch (SQLException e) {
+            Log.e(TAG, "getAllGameResults caused: " + e.getMessage());
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, "Returning GameResults: " + results.toString());
+        return results;
+    }
+
     /**
      * {@inheritDoc}
      **/
@@ -161,7 +191,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
             cursor = db.query(Feeder.GameFeed.TABLE_NAME,
                     new String[]{Feeder.GameFeed._ID, Feeder.GameFeed.COLUMN_DISPLAY_NAME,
                             Feeder.GameFeed.COLUMN_CLASSPATH_NAME, Feeder.GameFeed.COLUMN_MINIMUM_AGE},
-                    Feeder.GameFeed._ID + "+ ?",
+                    Feeder.GameFeed._ID + Feeder.WHERE_EQUALS,
                     new String[]{Long.toString(id)},
                     null, null, null);
             if (cursor.moveToFirst()) {
@@ -392,6 +422,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
         private static final String REFERENCES = " REFERENCES ";
         private static final String COMMA_SEP = ",";
         private static final String FOREIGN_KEY = " FOREIGN KEY ( ";
+        private static final String WHERE_EQUALS = " = ? ";
 
         private Feeder() {
             // to stop instantiation
