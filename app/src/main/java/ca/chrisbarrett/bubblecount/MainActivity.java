@@ -2,6 +2,7 @@ package ca.chrisbarrett.bubblecount;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +11,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
 
+import java.util.Map;
+
+import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
 import ca.chrisbarrett.bubblecount.util.Values;
 
@@ -182,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void saveMusicOnPreference() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor prefEditor = sharedPref.edit();
-        prefEditor.putBoolean(getString(R.string.pref_music_is_on_key), isMusicOn).commit();
+        prefEditor.putBoolean(getString(R.string.pref_music_is_on_key), isMusicOn).apply();
         Log.d(TAG, String.format("Saved Preference for MusicOn to: %b",
                 sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), false)));
     }
@@ -204,6 +208,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // TODO - Delete test method when finished
     void testSomething() {
-
+        AppDatabaseHelper dbHelper = new AppDatabaseHelper(this);
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Log.d(TAG, "Games: " + dbHelper.getAllGames(db));
+        Log.d(TAG,"Players: " + dbHelper.getAllPlayers(db));
+        Log.d(TAG, "GameResults: " + dbHelper.getAllGameResults(db));
+        db.close();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        for(Map.Entry<String,?> entry : sharedPreferences.getAll().entrySet()){
+            Log.d(TAG, entry.getKey()+" : "+entry.getValue());
+        }
     }
 }
