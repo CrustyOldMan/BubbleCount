@@ -55,7 +55,7 @@ public class GameActivity extends AppCompatActivity implements GameView.OnGameVi
         super.onPause();
         gameView.onPause();
         if (!isContinueMusic) {
-            Log.d(TAG, "onPause called and releasing MUSIC_MANAGER.");
+            Log.i(TAG, "onPause called and releasing MUSIC_MANAGER.");
             MUSIC_MANAGER.musicRelease();
         }
     }
