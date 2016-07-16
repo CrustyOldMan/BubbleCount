@@ -51,13 +51,13 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      *
      * @param context
      */
-    public AppDatabaseHelper(Context context) {
+    public AppDatabaseHelper (Context context) {
         super(context, Feeder.DB_NAME, null, DB_VERSION);
 
     }
 
     @Override
-    public void onCreate(SQLiteDatabase db) {
+    public void onCreate (SQLiteDatabase db) {
         Log.d(TAG, "Attempting to create database tables...");
         try {
             Log.d(TAG, Feeder.PlayerFeed.SQL_CREATE_ENTRIES);
@@ -73,7 +73,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    public void onUpgrade (SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL(Feeder.PlayerFeed.SQL_DELETE_ENTRIES);
         db.execSQL(Feeder.GameFeed.SQL_DELETE_ENTRIES);
         db.execSQL(Feeder.GameResultFeed.SQL_DELETE_ENTRIES);
@@ -88,7 +88,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public Player getPlayerById(SQLiteDatabase db, long id) {
+    public Player getPlayerById (SQLiteDatabase db, long id) {
         Log.d(TAG, "Retrieving Player " + id);
         Player player = null;
         Cursor cursor = null;
@@ -120,7 +120,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public GameResult getGameResultById(SQLiteDatabase db, long id) {
+    public GameResult getGameResultById (SQLiteDatabase db, long id) {
         Log.d(TAG, "Retrieving GameResult " + id);
         GameResult gameResult = null;
         Cursor cursor = null;
@@ -150,7 +150,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
     }
 
     @Override
-    public List<GameResult> getAllGameResults(SQLiteDatabase db) {
+    public List<GameResult> getAllGameResults (SQLiteDatabase db) {
         Log.d(TAG, "Retrieving All GameResults");
         List<GameResult> results = new ArrayList<>();
         Cursor cursor = null;
@@ -160,16 +160,16 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                             Feeder.GameResultFeed.COLUMN_CREATED_ON, Feeder.GameResultFeed.COLUMN_SYNCED_ON,
                             Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID, Feeder.GameResultFeed.COLUMN_FK_GAME_ID},
                     null, null, null, null, null);
-
-            cursor.moveToFirst();
-            do {
-                results.add(new GameResult(cursor.getLong(0),
-                        cursor.getInt(1),
-                        Feeder.dateFromDatabaseFormat(cursor.getString(2)),
-                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
-                        cursor.getLong(4),
-                        cursor.getLong(5)));
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    results.add(new GameResult(cursor.getLong(0),
+                            cursor.getInt(1),
+                            Feeder.dateFromDatabaseFormat(cursor.getString(2)),
+                            Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                            cursor.getLong(4),
+                            cursor.getLong(5)));
+                } while (cursor.moveToNext());
+            }
         } catch (SQLException e) {
             Log.e(TAG, "getAllGameResults caused: " + e.getMessage());
         } finally {
@@ -183,7 +183,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public Game getGameById(SQLiteDatabase db, long id) {
+    public Game getGameById (SQLiteDatabase db, long id) {
         Log.d(TAG, "Retrieving Game " + id);
         Game game = null;
         Cursor cursor = null;
@@ -213,7 +213,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public List<Game> getAllGames(SQLiteDatabase db) {
+    public List<Game> getAllGames (SQLiteDatabase db) {
         Log.d(TAG, "Retrieving All Games");
         List<Game> games = new ArrayList<>();
         Cursor cursor = null;
@@ -222,13 +222,14 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                     new String[]{Feeder.GameFeed._ID, Feeder.GameFeed.COLUMN_DISPLAY_NAME,
                             Feeder.GameFeed.COLUMN_CLASSPATH_NAME, Feeder.GameFeed.COLUMN_MINIMUM_AGE},
                     null, null, null, null, null);
-            cursor.moveToFirst();
-            do {
-                games.add(new Game(cursor.getLong(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getInt(3)));
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    games.add(new Game(cursor.getLong(0),
+                            cursor.getString(1),
+                            cursor.getString(2),
+                            cursor.getInt(3)));
+                } while (cursor.moveToNext());
+            }
         } catch (SQLException e) {
             Log.e(TAG, "getAllGames caused: " + e.getMessage());
         } finally {
@@ -242,7 +243,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public List<Player> getAllPlayers(SQLiteDatabase db) {
+    public List<Player> getAllPlayers (SQLiteDatabase db) {
         Log.d(TAG, "Retrieving All Players");
         List<Player> players = new ArrayList<>();
         Cursor cursor = null;
@@ -252,14 +253,15 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                             Feeder.PlayerFeed.COLUMN_YEAR_OF_BIRTH, Feeder.PlayerFeed.COLUMN_CREATED_ON,
                             Feeder.PlayerFeed.COLUMN_SYNCED_ON},
                     null, null, null, null, null);
-            cursor.moveToFirst();
-            do {
-                players.add(new Player(cursor.getLong(0),
-                        cursor.getString(1),
-                        cursor.getInt(2),
-                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
-                        Feeder.dateFromDatabaseFormat(cursor.getString(4))));
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    players.add(new Player(cursor.getLong(0),
+                            cursor.getString(1),
+                            cursor.getInt(2),
+                            Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                            Feeder.dateFromDatabaseFormat(cursor.getString(4))));
+                } while (cursor.moveToNext());
+            }
         } catch (SQLException e) {
             Log.e(TAG, "getAllPlayers caused: " + e.getMessage());
         } finally {
@@ -273,7 +275,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public List<GameResult> getAllGamesResultsForPlayer(SQLiteDatabase db, long playerId) {
+    public List<GameResult> getAllGamesResultsForPlayer (SQLiteDatabase db, long playerId) {
         Log.d(TAG, "Retrieving GameResults for Player " + playerId);
         List<GameResult> results = new ArrayList<>();
         Cursor cursor = null;
@@ -285,16 +287,16 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
                     Feeder.GameResultFeed.COLUMN_FK_PLAYER_ID + "+ ?",
                     new String[]{Long.toString(playerId)},
                     null, null, null);
-
-            cursor.moveToFirst();
-            do {
-                results.add(new GameResult(cursor.getLong(0),
-                        cursor.getInt(1),
-                        Feeder.dateFromDatabaseFormat(cursor.getString(2)),
-                        Feeder.dateFromDatabaseFormat(cursor.getString(3)),
-                        cursor.getLong(4),
-                        cursor.getLong(5)));
-            } while (cursor.moveToNext());
+            if (cursor.moveToFirst()) {
+                do {
+                    results.add(new GameResult(cursor.getLong(0),
+                            cursor.getInt(1),
+                            Feeder.dateFromDatabaseFormat(cursor.getString(2)),
+                            Feeder.dateFromDatabaseFormat(cursor.getString(3)),
+                            cursor.getLong(4),
+                            cursor.getLong(5)));
+                } while (cursor.moveToNext());
+            }
         } catch (SQLException e) {
             Log.e(TAG, "getAllGamesResultsForPlayer caused: " + e.getMessage());
         } finally {
@@ -308,7 +310,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public void updatePlayer(SQLiteDatabase db, Player player) {
+    public void updatePlayer (SQLiteDatabase db, Player player) {
 
     }
 
@@ -316,7 +318,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public int deletePlayer(SQLiteDatabase db, Player player) {
+    public int deletePlayer (SQLiteDatabase db, Player player) {
         Log.d(TAG, "Deleting Player " + player);
         int rows = 0;
         try {
@@ -334,7 +336,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public long insertGameResult(SQLiteDatabase db, GameResult result) {
+    public long insertGameResult (SQLiteDatabase db, GameResult result) {
         Log.d(TAG, "Inserting to database GameResult: " + result.toString());
         ContentValues values = new ContentValues();
         values.put(Feeder.GameResultFeed.COLUMN_TIME_RESULT, result.getTimeResult());
@@ -351,7 +353,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * {@inheritDoc}
      **/
     @Override
-    public long insertPlayer(SQLiteDatabase db, Player player) {
+    public long insertPlayer (SQLiteDatabase db, Player player) {
         Log.d(TAG, "Inserting to database Player: " + player.toString());
         ContentValues values = new ContentValues();
         values.put(Feeder.PlayerFeed.COLUMN_NAME, player.getName());
@@ -372,7 +374,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      * @param game
      * @return
      */
-    protected long insertGame(SQLiteDatabase db, Game game) {
+    protected long insertGame (SQLiteDatabase db, Game game) {
         Log.d(TAG, "Inserting to database Game: " + game.toString());
         ContentValues values = new ContentValues();
         values.put(Feeder.GameFeed.COLUMN_DISPLAY_NAME, game.getDisplayName());
@@ -388,11 +390,11 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
      *
      * @param db
      */
-    protected void insertGamesAtCreation(SQLiteDatabase db) {
+    protected void insertGamesAtCreation (SQLiteDatabase db) {
         Log.d(TAG, "insertGamesAtCreation attempting to store known Games.");
-        Game game = new Game("Letter Sequence", "ca.chrisbarrett.bubblecount.game.AlphabetGameEngine", GameEngine.NO_MINIMUM_AGE);
+        Game game = new Game("BubbleCount Letters", "ca.chrisbarrett.bubblecount.game.AlphabetGameEngine", GameEngine.NO_MINIMUM_AGE);
         insertGame(db, game);
-        game = new Game("Number Sequence", "ca.chrisbarrett.bubblecount.game.CountGameEngine", GameEngine.NO_MINIMUM_AGE);
+        game = new Game("BubbleCount Numbers", "ca.chrisbarrett.bubblecount.game.CountGameEngine", GameEngine.NO_MINIMUM_AGE);
         insertGame(db, game);
     }
 
@@ -424,7 +426,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
         private static final String FOREIGN_KEY = " FOREIGN KEY ( ";
         private static final String WHERE_EQUALS = " = ? ";
 
-        private Feeder() {
+        private Feeder () {
             // to stop instantiation
         }
 
@@ -436,7 +438,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
          * @return a well-formed Date object
          * @throws IllegalArgumentException
          */
-        public static Date dateFromDatabaseFormat(String input) {
+        public static Date dateFromDatabaseFormat (String input) {
             SimpleDateFormat formatter = new SimpleDateFormat(FORMAT_DATE_TIME);
             Date date = null;
             try {
@@ -460,7 +462,7 @@ public class AppDatabaseHelper extends SQLiteOpenHelper implements AppDatabase {
          * @return a well-formed String ready for storage in the database
          * @throws IllegalArgumentException
          */
-        public static String dateToDatabaseFormat(Date date) {
+        public static String dateToDatabaseFormat (Date date) {
             SimpleDateFormat formatter = new SimpleDateFormat(FORMAT_DATE_TIME);
             String string = null;
             try {
