@@ -28,8 +28,10 @@
     <!-- Configures a Default game -->
     <string name="pref_game_selector_title">Default Game</string>
     <string name="pref_game_selector_summary"></string>
-    <integer name="pref_game_selector_default">-1</integer>
-
+    <integer name="pref_game_selector_default">@integer/global_no_value</integer>
+    <string name="pref_game_selector_key">game_default</string>
+    <string-array name="pref_game_list_titles"></string-array> // empty as dynamically retrieved
+    <string-array name="pref_game_list_values"></string-array> // empty as dynamically retrieved
 
     <!-- Configures the PlayerFeed CRUD controls -->
     <string name="pref_cat_player_management_controls">Player Controls</string>

@@ -1,6 +1,9 @@
 package ca.chrisbarrett.bubblecount;
 
 import android.content.Context;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.DialogPreference;
 import android.preference.ListPreference;
@@ -15,6 +18,13 @@ import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
+import ca.chrisbarrett.bubblecount.dao.model.Game;
 import ca.chrisbarrett.bubblecount.dao.model.Player;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
 
@@ -27,9 +37,15 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
 
     private static final String TAG = "SettingsActivity";
     private static final BackgroundMusicManager MUSIC_MANAGER = BackgroundMusicManager.getInstance();
+    private static final String ARRAY_GAME_TITLES = "ARRAY_GAME_TITLES";
+    private static final String ARRAY_GAME_VALUES = "ARRAY_GAME_VALUES";
+    private static final String ARRAY_PLAYER_TITLES = "ARRAY_PLAYER_TITLES";
+    private static final String ARRAY_PLAYER_VALUES = "ARRAY_PLAYER_VALUES";
 
     private static boolean isContinueMusic;
     private boolean isMusicOn;
+    private static Map<String, String[]> games;
+    private static Map<String, String[]> players;
 
     //
     // LifeCycles Events Begin Here for the SettingsActivity
@@ -39,6 +55,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
      * Similar to other Activities, the BackgroundMusicManager must be bound and the music loaded
      * if required. In addition, the view is replaced initially with the GeneralSettingsFragment
      * and the database is polled for Players
+     *
      * @param savedInstanceState
      */
     @Override
@@ -53,6 +70,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
     @Override
     protected void onResume() {
         super.onResume();
+        new GetGamesTask().execute();
+        new GetPlayersTask().execute();
         MUSIC_MANAGER.initialize(this, R.raw.background);
         isMusicOn = PreferenceManager.getDefaultSharedPreferences(this).
                 getBoolean(getString(R.string.pref_music_is_on_key),
@@ -101,9 +120,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
 
-            if (preference instanceof PlayerDialogPreference){
+            if (preference instanceof GameListPreference) {
+                Log.d(TAG, "OnPreferenceChangeListener heard change in GameListPreference");
+
+
+            } else if (preference instanceof PlayerDialogPreference) {
                 Log.d(TAG, "OnPreferenceChangeListener heard change in PlayerDialogPreference");
-                
+
             } else if (preference instanceof ListPreference) {
                 String stringValue = value.toString();
                 Log.d(TAG, "OnPreferenceChangeListener heard change in ListPreference");
@@ -207,9 +230,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
                             return true;
                         }
                     });
-
         }
-
 
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
@@ -218,6 +239,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
                 case android.R.id.home:
                     Log.d(TAG, "Going home...");
                     isContinueMusic = true;
+                    getActivity().setResult(RESULT_OK);
                     getActivity().finish();
                     return true;
             }
@@ -227,34 +249,26 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
 
 
     /**
-     * Inner class for displaying the PlayerFeed control settings fragment
+     * GameListPreference is used to display a custom ListPreference containing a list of games
+     * referenced to the game's primary ID in the database.
      */
-//    public static class PlayerSettingsFragment extends PreferenceFragment {
-//
-//        private static final String TAG = "GeneralSettingsFragment";
-//
-//        @Override
-//        public void onCreate(Bundle savedInstanceState) {
-//            super.onCreate(savedInstanceState);
-//            setHasOptionsMenu(true);
-//        }
-//
-//        @Override
-//        public boolean onOptionsItemSelected(MenuItem item) {
-//            Log.d(TAG, "Menu pressed from PlayerSettingsFragment.");
-//            switch (item.getItemId()) {
-//                case android.R.id.home:
-//                    Log.d(TAG, "Going back...");
-//                    startActivity(new Intent(getActivity(), SettingsActivity.class));
-//                    return true;
-//            }
-//            return super.onOptionsItemSelected(item);
-//        }
-//    }
+    public static class GameListPreference extends ListPreference {
 
+        public GameListPreference(Context context) {
+            super(context, null);
+        }
+
+        public GameListPreference(Context context, AttributeSet attrs) {
+            super(context, attrs);
+
+            //bindPreferenceSummaryToValue("");
+        }
+
+
+    }
 
     /**
-     * This class is a Custom DialogPreference used to display player details
+     * This class is a Custom DialogPreference used to edit player details
      */
     public static class PlayerDialogPreference extends DialogPreference {
 
@@ -273,11 +287,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
             }
         }
 
-
-        //
-        // Inner classes begin here
-        //
-
         /**
          * This class provides a custom year picker for the PlayerFeed
          */
@@ -288,6 +297,101 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Bac
             }
 
 
+        }
+    }
+
+
+    /**
+     * This inner class retrieves from the database a Map containing two String arrays:
+     * <ul>
+     * <li>Key: {@link SettingsActivity#ARRAY_GAME_TITLES}, Values: A List of Strings containing
+     * the displayable names of all Games</li>
+     * <li>Key: {@link SettingsActivity#ARRAY_GAME_VALUES}, Values: A List of Strings containing
+     * the primary keys corresponding to the Games</li>
+     * </ul>
+     */
+    private class GetGamesTask extends AsyncTask<Void, Void, Map<String, String[]>> {
+
+        @Override
+        protected Map<String, String[]> doInBackground(Void... params) {
+            Log.d(TAG, "Attempting to retrieve Games from database.");
+            AppDatabaseHelper dbHelper = new AppDatabaseHelper(getApplicationContext());
+            SQLiteDatabase db = null;
+            Map<String, String[]> dbResults = new HashMap<>();
+            try {
+                List<String> dbValues = new ArrayList<>();
+                List<String> dbTitles = new ArrayList<>();
+                db = dbHelper.getReadableDatabase();
+                List<Game> dbGames = dbHelper.getAllGames(db);
+                for (Game dbGame : dbGames) {
+                    dbValues.add(String.valueOf(dbGame.getId()));
+                    dbTitles.add(dbGame.getDisplayName());
+                    Log.d(TAG, dbGame.getId() + " : " + dbGame.getDisplayName());
+                }
+                dbResults.put(SettingsActivity.ARRAY_GAME_TITLES, dbTitles.toArray(new String[dbTitles.size()]));
+                dbResults.put(SettingsActivity.ARRAY_GAME_VALUES, dbValues.toArray(new String[dbValues.size()]));
+            } catch (SQLException e) {
+                Log.e(TAG, "Attempting to GetGamesTask caused: " + e.getMessage());
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+            return dbResults;
+        }
+
+        @Override
+        protected void onPostExecute(Map<String, String[]> stringMap) {
+            Log.d(TAG, "Completed retrieval of Games.");
+            super.onPostExecute(stringMap);
+            games = stringMap;
+        }
+    }
+
+    /**
+     * This inner class retrieves from the database a Map containing two String arrays:
+     * <ul>
+     * <li>Key: {@link SettingsActivity#ARRAY_PLAYER_TITLES}, Values: A List of Strings containing
+     * the displayable names of all Players</li>
+     * <li>Key: {@link SettingsActivity#ARRAY_PLAYER_VALUES}, Values: A List of Strings containing
+     * the primary keys corresponding to the Players</li>
+     * </ul>
+     */
+    private class GetPlayersTask extends AsyncTask<Void, Void, Map<String, String[]>> {
+
+        @Override
+        protected Map<String, String[]> doInBackground(Void... params) {
+            Log.d(TAG, "Attempting to retrieve Players from database.");
+            AppDatabaseHelper dbHelper = new AppDatabaseHelper(getApplicationContext());
+            SQLiteDatabase db = null;
+            Map<String, String[]> dbResults = new HashMap<>();
+            try {
+                List<String> dbValues = new ArrayList<>();
+                List<String> dbTitles = new ArrayList<>();
+                db = dbHelper.getReadableDatabase();
+                List<Player> dpPlayers = dbHelper.getAllPlayers(db);
+                for (Player dbPlayer : dpPlayers) {
+                    dbValues.add(String.valueOf(dbPlayer.getId()));
+                    dbTitles.add(dbPlayer.getName());
+                    Log.d(TAG, dbPlayer.getId() + " : " + dbPlayer.getName());
+                }
+                dbResults.put(SettingsActivity.ARRAY_PLAYER_TITLES, dbTitles.toArray(new String[dbTitles.size()]));
+                dbResults.put(SettingsActivity.ARRAY_PLAYER_VALUES, dbValues.toArray(new String[dbValues.size()]));
+            } catch (SQLException e) {
+                Log.e(TAG, "Attempting to GetPlayersTask caused: " + e.getMessage());
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
+            return dbResults;
+        }
+
+        @Override
+        protected void onPostExecute(Map<String, String[]> stringMap) {
+            Log.d(TAG, "Completed retrieval of Players.");
+            super.onPostExecute(stringMap);
+            players = stringMap;
         }
     }
 }
