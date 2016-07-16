@@ -1,5 +1,7 @@
 package ca.chrisbarrett.bubblecount.game;
 
+import ca.chrisbarrett.bubblecount.util.Values;
+
 /**
  * Concrete class of the GameEngine to generate a letter finding game. GameFeed will generate a letter.
  * The question generated will display four leading letters.
@@ -44,7 +46,7 @@ public class AlphabetGameEngine extends AbstractEngine {
      */
     @Override
     public void randomize () {
-        char charAnswer = (char) (rand.nextInt(maxValue - minValue - 2) + minValue + 3);
+        char charAnswer = (char) (Values.RANDOM.nextInt(maxValue - minValue - 2) + minValue + 3);
         StringBuilder build = new StringBuilder(9).append('?');
         for (int i = charAnswer - 1; i > charAnswer - 4; i--) {
             build.insert(0, (char) i + "  ");

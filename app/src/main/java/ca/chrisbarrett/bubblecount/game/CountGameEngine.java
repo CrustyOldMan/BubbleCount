@@ -1,5 +1,7 @@
 package ca.chrisbarrett.bubblecount.game;
 
+import ca.chrisbarrett.bubblecount.util.Values;
+
 /**
  * Concrete class of the GameFeed GameEngine to generate a counting game. GameFeed will generate a number
  * between the range appropriate for the player's age. A question for display between range will also be generated. The question generated will display fouÒr leading numbers.
@@ -41,7 +43,7 @@ public class CountGameEngine extends AbstractEngine {
      */
     @Override
     public void randomize () {
-        int intAnswer = rand.nextInt(maxValue - minValue - 2) + minValue + 3;
+        int intAnswer = Values.RANDOM.nextInt(maxValue - minValue - 2) + minValue + 3;
         StringBuilder build = new StringBuilder(9).append('?');
         for (int i = intAnswer - 1; i > intAnswer - 4; i--) {
             build.insert(0, i + "  ");

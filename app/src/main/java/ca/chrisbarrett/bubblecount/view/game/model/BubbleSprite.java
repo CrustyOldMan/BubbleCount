@@ -6,9 +6,8 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 
-import java.util.Random;
-
 import ca.chrisbarrett.bubblecount.util.TextFormat;
+import ca.chrisbarrett.bubblecount.util.Values;
 
 /**
  * Concrete implementation of the Sprite for drawing Bubbles on the screen.
@@ -23,7 +22,6 @@ public class BubbleSprite implements Sprite {
     public static final float MAX_SPEED = 5;
     public static final float MIN_SPEED = 2;
 
-    private static final Random rand = new Random(System.currentTimeMillis());
     private static final String TAG = "BubbleSprite";
 
     private Bitmap spriteImage;
@@ -60,8 +58,8 @@ public class BubbleSprite implements Sprite {
         this.frameWidth = spriteImage.getWidth();
 
         // Determine a random position on the game area
-        this.x = (float) rand.nextInt((int) (screenWidth - (radius * 2))) + radius;
-        this.y = (float) rand.nextInt((int) (screenHeight - (radius * 2))) + radius;
+        this.x = (float) Values.RANDOM.nextInt((int) (screenWidth - (radius * 2))) + radius;
+        this.y = (float) Values.RANDOM.nextInt((int) (screenHeight - (radius * 2))) + radius;
 
         this.whatToDraw = new Rect(0, 0, frameWidth, frameHeight);
         this.whereToDraw = new RectF(x - radius, y - radius, x + radius, y + radius);

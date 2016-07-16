@@ -3,7 +3,6 @@ package ca.chrisbarrett.bubblecount.game;
 import android.util.Log;
 
 import java.util.HashSet;
-import java.util.Random;
 import java.util.Set;
 
 /**
@@ -18,7 +17,7 @@ import java.util.Set;
 public abstract class AbstractEngine implements GameEngine {
 
     protected static final String TAG = "GameEngine";
-    protected static final Random rand = new Random(System.currentTimeMillis());
+
     protected String correctElement;
     protected String question;
     protected Set<String> incorrectElements;

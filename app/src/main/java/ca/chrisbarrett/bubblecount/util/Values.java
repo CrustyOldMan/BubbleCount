@@ -1,6 +1,8 @@
 package ca.chrisbarrett.bubblecount.util;
 
 
+import java.util.Random;
+
 /**
  * A placeholder for shared Values information, such as Preference, Extra tags
  *
@@ -11,6 +13,7 @@ package ca.chrisbarrett.bubblecount.util;
 public final class Values {
 
     public final static int NO_ID = -1;         // placeholder
+    public static final Random RANDOM = new Random();
 
     private Values (){}
 
