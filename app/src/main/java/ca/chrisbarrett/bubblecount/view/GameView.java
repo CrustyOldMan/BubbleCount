@@ -1,10 +1,14 @@
 package ca.chrisbarrett.bubblecount.view;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -12,16 +16,21 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
-import ca.chrisbarrett.bubblecount.game.AlphabetGameEngine;
+import ca.chrisbarrett.bubblecount.R;
+import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
+import ca.chrisbarrett.bubblecount.dao.model.Game;
 import ca.chrisbarrett.bubblecount.game.GameEngine;
 import ca.chrisbarrett.bubblecount.util.FontCache;
 import ca.chrisbarrett.bubblecount.util.PaintCache;
 import ca.chrisbarrett.bubblecount.util.SpriteCache;
 import ca.chrisbarrett.bubblecount.util.TextFormat;
+import ca.chrisbarrett.bubblecount.util.Values;
 import ca.chrisbarrett.bubblecount.view.game.model.BubbleSprite;
 import ca.chrisbarrett.bubblecount.view.game.model.Sprite;
 
@@ -151,7 +160,8 @@ public class GameView extends SurfaceView implements Runnable {
     public void run() {
         Log.d(TAG, "Setting up the game...");
         // load the game engine
-        gameEngine = new AlphabetGameEngine();
+        gameEngine = loadGame();
+        //gameEngine = new AlphabetGameEngine();
 
         // setup the painters
         textPaint = PaintCache.getTextPainter();
@@ -168,7 +178,7 @@ public class GameView extends SurfaceView implements Runnable {
         // looper to run the game on the thread
         while (isRunning) {
             if (isNewRound) {
-                Log.d(TAG, "Setting up a new round");
+                Log.d(TAG, "Setting up round: " + roundCounter);
                 prepareRound();
                 roundCounter++;
                 isNewRound = false;
@@ -190,9 +200,9 @@ public class GameView extends SurfaceView implements Runnable {
      * <li>Triggering the incorrectAnswer will make that sprite invisible</li>
      * </ul>
      * <p/>
-     * , the method checks to see if the
-     * correct answer has been hit. If the correct answer has been  the isRunning value is changed to false in order to
-     * trigger an endin in the game loop. If
+     * <p/>
+     * The method checks to see if the correct answer has been hit. If the correct answer has been
+     * hit, a check of the game state will be done.
      *
      * @param event
      * @return
@@ -251,6 +261,57 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     /**
+     * This method loads the {@link GameEngine} from the database if defined as a preference.
+     * If not defined, a random GameEngine will be selected.
+     *
+     * @return
+     */
+    protected GameEngine loadGame() {
+        Log.d(TAG, "Attempting to load GameEngine.");
+        long defaultGameId = getResources().getInteger(R.integer.pref_game_selector_default);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        long gameId = sharedPreferences.getLong(getResources().getString(R.string.pref_game_selector_key), defaultGameId);
+        Game game = null;
+        SQLiteDatabase db = null;
+        // Attempt to load the specified gameId in the preferences
+        try {
+            AppDatabaseHelper dbHelper = new AppDatabaseHelper(getContext());
+            db = dbHelper.getReadableDatabase();
+            if (gameId != Values.NO_ID) {
+                game = dbHelper.getGameById(db, gameId);
+                Log.d(TAG, "Located in Preference: " + game);
+            }
+            // if the retrieval fails, or gameId is null, then randomly choose a GameEngine
+            if (game == null || gameId == Values.NO_ID) {
+                List<Game> games = dbHelper.getAllGames(db);
+                Collections.shuffle(games, Values.RANDOM);
+                game = games.get(0);
+                Log.d(TAG, "No Preference set. Picked randomly: " + game);
+            }
+
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        } finally {
+            if (db != null) {
+                db.close();
+            }
+        }
+        GameEngine loadedEngine = null;
+        try {
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            loadedEngine = (GameEngine) classLoader.loadClass(game.getClassPathName()).newInstance();
+            Log.d(TAG, "Instantiated: " + loadedEngine.getClass());
+        } catch (ClassNotFoundException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (InstantiationException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (IllegalAccessException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        return loadedEngine;
+    }
+
+    /**
      * Sets up the round in the background. Positions the Sprites randomly in the defined area for
      * Sprites.
      * <p/>
@@ -306,9 +367,17 @@ public class GameView extends SurfaceView implements Runnable {
             isNewRound = true;
         } else {
             Log.d(TAG, "Game End called. Shutting down...");
+            saveGameResult();
             gameListener.onGameEnd(totalTime);
             isRunning = false;
         }
+    }
+
+    /**
+     * Helper method saves
+     */
+    protected void saveGameResult(){
+
     }
 
     /**
