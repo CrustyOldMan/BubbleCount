@@ -3,12 +3,10 @@ package ca.chrisbarrett.bubblecount.view;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -23,12 +21,11 @@ import java.util.List;
 import java.util.Set;
 
 import ca.chrisbarrett.bubblecount.R;
-import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
+import ca.chrisbarrett.bubblecount.dao.Database;
 import ca.chrisbarrett.bubblecount.dao.model.Game;
 import ca.chrisbarrett.bubblecount.game.GameEngine;
 import ca.chrisbarrett.bubblecount.util.FontCache;
 import ca.chrisbarrett.bubblecount.util.PaintCache;
-import ca.chrisbarrett.bubblecount.util.SpriteCache;
 import ca.chrisbarrett.bubblecount.util.TextFormat;
 import ca.chrisbarrett.bubblecount.util.Values;
 import ca.chrisbarrett.bubblecount.view.game.model.BubbleSprite;
@@ -53,9 +50,8 @@ import ca.chrisbarrett.bubblecount.view.game.model.Sprite;
 public class GameView extends SurfaceView implements Runnable {
 
     public static final float VERTICAL_DIVIDE_RATIO = 0.8f;
-    public static final int BACKGROUND_COLOR = Color.BLACK;
     public static final int SPRITE_PLACEMENT_ATTEMPTS = 5;
-    public static final int MAX_SPRITES = 20;
+    public static final int MAX_SPRITES = 20; // 20; // TODO - Change back to 20 once collision works.
     public static final int MAX_ROUNDS = 5;
     private static final String TAG = "GameView";
 
@@ -70,7 +66,9 @@ public class GameView extends SurfaceView implements Runnable {
     private float screenWidth;
     private float gameAreaHeight;
     private float textAreaHeight;
+    private int backgroundColor;
 
+    private long gameId;
     private GameEngine gameEngine;
     private String gameEngineQuestion;
     private String gameEngineAnswer;
@@ -88,7 +86,7 @@ public class GameView extends SurfaceView implements Runnable {
      *
      * @param context Context on which the GameView is displayed
      */
-    public GameView(Context context) {
+    public GameView (Context context) {
         this(context, null);
     }
 
@@ -99,7 +97,7 @@ public class GameView extends SurfaceView implements Runnable {
      * @param context Context on which the GameView is displayed
      * @param attrs   optional attributes provided by the XML file
      */
-    public GameView(Context context, AttributeSet attrs) {
+    public GameView (Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
@@ -110,7 +108,7 @@ public class GameView extends SurfaceView implements Runnable {
      * @param attrs    optional attributes provided by the XML file
      * @param defStyle optional defined theme styles provided by XML file
      */
-    public GameView(Context context, AttributeSet attrs, int defStyle) {
+    public GameView (Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         Log.d(TAG, "Instantiating GameView");
         surfaceHolder = getHolder();
@@ -120,6 +118,7 @@ public class GameView extends SurfaceView implements Runnable {
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString() + " must implement OnGameViewListener");
         }
+        backgroundColor = ContextCompat.getColor(context, R.color.primaryBackground);
     }
 
     //
@@ -130,7 +129,7 @@ public class GameView extends SurfaceView implements Runnable {
      * Must be called when the calling Activity or Fragment calls onResume. Method checks the
      * screen dimensions and starts a new thread to run the game.
      */
-    public void onResume() {
+    public void onResume () {
         Log.d(TAG, "GameView onResume called");
         isRunning = true;
         isNewRound = true;
@@ -142,7 +141,7 @@ public class GameView extends SurfaceView implements Runnable {
      * Must be called when the calling Activity or Fragment calls onPause. Method shuts down the
      * game thread.
      */
-    public void onPause() {
+    public void onPause () {
         Log.d(TAG, "GameView onPause called");
         isRunning = false;
         try {
@@ -157,11 +156,10 @@ public class GameView extends SurfaceView implements Runnable {
      * then loops as the game is running.
      */
     @Override
-    public void run() {
+    public void run () {
         Log.d(TAG, "Setting up the game...");
         // load the game engine
         gameEngine = loadGame();
-        //gameEngine = new AlphabetGameEngine();
 
         // setup the painters
         textPaint = PaintCache.getTextPainter();
@@ -175,6 +173,7 @@ public class GameView extends SurfaceView implements Runnable {
         gameAreaHeight = screenHeight * VERTICAL_DIVIDE_RATIO;
         textAreaHeight = screenHeight - gameAreaHeight;
 
+        roundCounter = 1;
         // looper to run the game on the thread
         while (isRunning) {
             if (isNewRound) {
@@ -186,6 +185,11 @@ public class GameView extends SurfaceView implements Runnable {
             }
             update();
             draw();
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "Thread failed...");
+            }
         }
     }
 
@@ -208,7 +212,7 @@ public class GameView extends SurfaceView implements Runnable {
      * @return
      */
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
+    public boolean onTouchEvent (MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 boolean isGameFinished = false;
@@ -230,15 +234,22 @@ public class GameView extends SurfaceView implements Runnable {
         return super.onTouchEvent(event);
     }
 
-
     /**
      * This method updates the drawables. As positions inside the Set are updated, an Iterator is used.
      * Generally, after updating, {@link #draw()} should be called.
      */
-    protected void update() {
+    protected void update () {
         Iterator<Sprite> spriteIterator = sprites.iterator();
+
         while (spriteIterator.hasNext()) {
-            spriteIterator.next().update();
+            Sprite outerSprite = spriteIterator.next();
+            outerSprite.update();
+            // deletes any sprites that have been turned invisible and skips if this sprite has been updated.
+            if (!outerSprite.getVisibility()) {
+                spriteIterator.remove();
+                continue;
+            }
+            outerSprite.animate();
         }
     }
 
@@ -246,10 +257,16 @@ public class GameView extends SurfaceView implements Runnable {
      * Draws the drawables. For sprites, a foreach loop is used as no changes to the sprite values
      * takes place. This method should be called after {@link #update()}.
      */
-    protected void draw() {
+    protected void draw () {
         if (surfaceHolder.getSurface().isValid()) {
             canvas = surfaceHolder.lockCanvas();
-            canvas.drawColor(BACKGROUND_COLOR);
+            canvas.drawColor(backgroundColor);
+            drawPaint.setColor(ContextCompat.getColor(context, R.color.secondaryBackground));
+            canvas.drawRect(0, gameAreaHeight, screenWidth, gameAreaHeight + textAreaHeight, drawPaint);
+            drawPaint.setColor(ContextCompat.getColor(context, R.color.divider));
+            canvas.drawRect(0, gameAreaHeight, screenWidth, gameAreaHeight + 5, drawPaint);
+            canvas.drawRect(gameAreaHeight, screenWidth-5, screenWidth, gameAreaHeight + textAreaHeight, drawPaint);
+            textPaint.setColor(ContextCompat.getColor(context, R.color.primaryDark));
             canvas.drawText(gameEngineQuestion, screenWidth / 2f, TextFormat
                     .verticalCenter(gameAreaHeight, textAreaHeight + gameAreaHeight,
                             textPaint), textPaint);
@@ -260,44 +277,42 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
+
     /**
-     * This method loads the {@link GameEngine} from the database if defined as a preference.
-     * If not defined, a random GameEngine will be selected.
+     * This method loads the {@link GameEngine} from the database based on the preference setting.
+     * If the preference is null, or the preference is equal to 1, then a random game will be loaded.
+     * We do it in this class, as it's closely related to the GameView and the GameView can run this
+     * on another thread.
      *
      * @return
      */
-    protected GameEngine loadGame() {
+    protected GameEngine loadGame () {
         Log.d(TAG, "Attempting to load GameEngine.");
-        long defaultGameId = getResources().getInteger(R.integer.pref_game_selector_default);
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-        long gameId = sharedPreferences.getLong(getResources().getString(R.string.pref_game_selector_key), defaultGameId);
         Game game = null;
-        SQLiteDatabase db = null;
-        // Attempt to load the specified gameId in the preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        long defaultGameId = getResources().getInteger(R.integer.pref_game_selector_default_value);
+        long gameSelector = Long.valueOf(sharedPreferences.getString(getResources().getString(R.string.pref_game_selector_key), "" + defaultGameId));
+        Log.d(TAG, "Retrieved GameEngine id: " + gameSelector);
         try {
-            AppDatabaseHelper dbHelper = new AppDatabaseHelper(getContext());
-            db = dbHelper.getReadableDatabase();
-            if (gameId != Values.NO_ID) {
-                game = dbHelper.getGameById(db, gameId);
-                Log.d(TAG, "Located in Preference: " + game);
-            }
-            // if the retrieval fails, or gameId is null, then randomly choose a GameEngine
-            if (game == null || gameId == Values.NO_ID) {
-                List<Game> games = dbHelper.getAllGames(db);
+            Database db = new Database(getContext());
+            db.open();
+            if (Game.RANDOM == gameSelector) {
+                List<Game> games = db.gameDao.selectAllGames();
                 Collections.shuffle(games, Values.RANDOM);
                 game = games.get(0);
-                Log.d(TAG, "No Preference set. Picked randomly: " + game);
+                Log.d(TAG, "Randomly selected: " + game.toString());
+            } else {
+                game = db.gameDao.selectGameById(gameSelector);
+                Log.d(TAG, "As per User, selected: " + game.toString());
             }
-
+            db.close();
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage());
-        } finally {
-            if (db != null) {
-                db.close();
-            }
         }
+        gameId = game.getId();
         GameEngine loadedEngine = null;
         try {
+            Log.d(TAG, "Attempting to instantiate using: " + game.getClassPathName());
             ClassLoader classLoader = this.getClass().getClassLoader();
             loadedEngine = (GameEngine) classLoader.loadClass(game.getClassPathName()).newInstance();
             Log.d(TAG, "Instantiated: " + loadedEngine.getClass());
@@ -322,15 +337,14 @@ public class GameView extends SurfaceView implements Runnable {
      * The total number of Sprites will be the lesser of the size of {@link GameEngine#getCorrectElement()}
      * and {@link #MAX_SPRITES}
      */
-    protected void prepareRound() {
+    protected void prepareRound () {
         gameEngine.randomize();
         gameEngineAnswer = gameEngine.getCorrectElement();
         gameEngineQuestion = gameEngine.getQuestion();
         sprites = new HashSet();
-        Bitmap bubbleSprite = SpriteCache.getSprite(context);
 
-        // Always insert the first bubble as it as the correct answer
-        sprites.add(new BubbleSprite(bubbleSprite, screenWidth, gameAreaHeight, gameEngineAnswer));
+        // Always insert the first bubble_sprite as it as the correct answer
+        sprites.add(new BubbleSprite(context, screenWidth, gameAreaHeight, gameEngineAnswer));
 
         boolean isSpriteOverlap;
         Iterator<String> iteratorElements = gameEngine.getIncorrectElements().iterator();
@@ -339,7 +353,7 @@ public class GameView extends SurfaceView implements Runnable {
             int creationAttempt = 0;
             do {
                 isSpriteOverlap = false;
-                newSprite = new BubbleSprite(bubbleSprite, screenWidth, gameAreaHeight, null);
+                newSprite = new BubbleSprite(context, screenWidth, gameAreaHeight, null);
                 for (Sprite sprite : sprites) {
                     if (sprite.isCollision(newSprite)) {
                         isSpriteOverlap = true;
@@ -361,14 +375,14 @@ public class GameView extends SurfaceView implements Runnable {
      * then a new round will begin. Otherwise, the game will shutdown and return to the calling
      * Activity the totalTime.
      */
-    protected void checkGameState() {
-        totalTime = System.currentTimeMillis() - roundStartTime;
-        if (roundCounter < MAX_ROUNDS) {
+    protected void checkGameState () {
+        totalTime = totalTime + (System.currentTimeMillis() - roundStartTime);
+        if (roundCounter <= MAX_ROUNDS) {
             isNewRound = true;
         } else {
             Log.d(TAG, "Game End called. Shutting down...");
             saveGameResult();
-            gameListener.onGameEnd(totalTime);
+            gameListener.onGameEnd(gameId, totalTime);
             isRunning = false;
         }
     }
@@ -376,7 +390,7 @@ public class GameView extends SurfaceView implements Runnable {
     /**
      * Helper method saves
      */
-    protected void saveGameResult(){
+    protected void saveGameResult () {
 
     }
 
@@ -389,9 +403,10 @@ public class GameView extends SurfaceView implements Runnable {
         /**
          * onGameEnd is called when a game has ended
          *
-         * @param time the total time in milliseconds that the game took
+         * @param gameId the gameId of the game played
+         * @param time   the total time in milliseconds that the game took
          */
-        void onGameEnd(long time);
+        void onGameEnd (long gameId, long time);
     }
 }
 
