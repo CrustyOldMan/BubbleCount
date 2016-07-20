@@ -1,0 +1,119 @@
+package ca.chrisbarrett.bubblecount.dialog;
+
+import android.app.Activity;
+import android.app.DialogFragment;
+import android.content.Context;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.AdapterView;
+import android.widget.CursorAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+
+import ca.chrisbarrett.bubblecount.R;
+
+/**
+ * This Dialog generates a List view in a Dialog
+ *
+ * @author Chris Barrett
+ * @see
+ * @since Jul 16, 2016
+ */
+public class ListDialogFragment extends DialogFragment implements AdapterView.OnItemClickListener {
+
+    public static final int NO_CALLER_ID = -1;
+    private static final String TAG = "ListDialogFragment";
+    private Cursor cursor;
+    private ListView listView;
+    private OnListDialogItemClickListener callbackListener;
+
+    @Override
+    public View onCreateView (LayoutInflater inflater, ViewGroup container,
+                              Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView called.");
+        View view = inflater.inflate(R.layout.fragment_listdialog, null, false);
+        listView = (ListView) view.findViewById(R.id.list);
+        getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        return view;
+    }
+
+    public void setCursor (Cursor cursor) {
+        this.cursor = cursor;
+    }
+
+    @Override
+    public void onActivityCreated (Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        CursorAdapter adapter = new ListCursorAdapter(getActivity(), cursor, 0);
+        listView.setAdapter(adapter);
+        listView.setOnItemClickListener(this);
+    }
+
+    @Override
+    public void onAttach (Activity activity) {
+        super.onAttach(activity);
+        try {
+            callbackListener = (OnListDialogItemClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(getActivity().toString() + " must implement OnListDialogItemClickListener");
+        }
+
+    }
+
+    @Override
+    public void onItemClick (AdapterView<?> parent, View view, int position,
+                             long id) {
+        Log.d(TAG, "onItemClick called.");
+        if (callbackListener != null) {
+            Log.d(TAG, "View implements OnListDialogItemClickListener. Firing OnListDialogItemClick.");
+            callbackListener.OnListDialogItemClick(NO_CALLER_ID, position, id);
+        }
+        dismiss();
+    }
+
+    /**
+     * This inner class defines the Listener a user of the {@link ListDialogFragment} should implement.
+     */
+    public interface OnListDialogItemClickListener {
+
+        /**
+         * On user ItemClick, a callback containging hte
+         *
+         * @param position
+         * @param id
+         */
+        void OnListDialogItemClick (int callerId, int position, long id);
+    }
+
+    /**
+     * This inner class defines the Adapter for the ListDialog
+     */
+    public class ListCursorAdapter extends CursorAdapter {
+
+        private static final String TAG = "ListCursorAdapter";
+
+        private LayoutInflater cursorInflater;
+
+        public ListCursorAdapter (Context context, Cursor c, int flags) {
+            super(context, c, flags);
+            cursorInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        }
+
+        @Override
+        public View newView (Context context, Cursor cursor, ViewGroup parent) {
+            return cursorInflater.inflate(R.layout.listdialog_row_layout, parent, false);
+        }
+
+        @Override
+        public void bindView (View view, Context context, Cursor cursor) {
+            TextView title = (TextView) view.findViewById(R.id.list_row_text);
+            title.setText(cursor.getString(1));
+        }
+    }
+}
+
