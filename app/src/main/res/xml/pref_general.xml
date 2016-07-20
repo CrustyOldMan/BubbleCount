@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/pref_cat_sound_controls"/>
+
+    <CheckBoxPreference
+        android:persistent="true"
+        android:defaultValue="@bool/pref_music_is_on_default"
+        android:key="@string/pref_music_is_on_key"
+        android:summary="@string/pref_music_is_on_summary"
+        android:title="@string/pref_music_is_on_title"/>
+
+    <CheckBoxPreference
+        android:persistent="true"
+        android:defaultValue="@bool/pref_music_toggle_available_default"
+        android:key="@string/pref_music_toggle_available_key"
+        android:summary="@string/pref_music_toggle_available_summary"
+        android:title="@string/pref_music_toggle_available_title"/>
+
+    <PreferenceCategory
+        android:title="@string/pref_cat_parental_access_controls"/>
+
+    <Preference
+        android:persistent="true"
+        android:defaultValue="@integer/pref_game_selector_default_value"
+        android:key="@string/pref_game_selector_key"
+        android:title="@string/pref_game_selector_title"/>
+
+    <PreferenceScreen
+        android:summary="@string/pref_cat_player_management_summary"
+        android:title="@string/pref_cat_player_management_controls">
+
+        <PreferenceCategory
+            android:title="@string/pref_cat_player_management_controls"/>
+
+        <ca.chrisbarrett.bubblecount.preference.PlayerDialogPreference
+            android:persistent="false"
+            android:key="@string/pref_player_create_key"
+            android:summary="@string/pref_player_create_summary"
+            android:title="@string/pref_player_create_title"/>
+
+        <Preference
+            android:persistent="false"
+            android:key="@string/pref_player_edit_key"
+            android:summary="@string/pref_player_edit_summary"
+            android:title="@string/pref_player_edit_title"/>
+
+        <Preference
+            android:persistent="false"
+            android:key="@string/pref_player_delete_key"
+            android:summary="@string/pref_player_delete_summary"
+            android:title="@string/pref_player_delete_title"/>
+
+        <Preference
+            android:persistent="true"
+            android:defaultValue="@integer/pref_player_selector_default_value"
+            android:key="@string/pref_player_selector_key"
+            android:title="@string/pref_player_selector_title"/>
+
+    </PreferenceScreen>
+
+
+</PreferenceScreen>
