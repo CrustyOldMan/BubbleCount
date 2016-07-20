@@ -7,8 +7,6 @@ import android.os.Parcelable;
 import java.util.Calendar;
 import java.util.Date;
 
-import ca.chrisbarrett.bubblecount.util.Values;
-
 /**
  * POJO for holding GameResult objects. GameResults are associated with both a Player and a
  * Game through their foreign key int fields.
@@ -19,9 +17,21 @@ import ca.chrisbarrett.bubblecount.util.Values;
  */
 public class GameResult implements Parcelable {
 
+    public static final long NO_ID = -1;
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<GameResult> CREATOR = new Parcelable.Creator<GameResult>() {
+        @Override
+        public GameResult createFromParcel (Parcel in) {
+            return new GameResult(in);
+        }
 
+        @Override
+        public GameResult[] newArray (int size) {
+            return new GameResult[size];
+        }
+    };
     private long id;                 // pk of the game result
-    private int timeResult;         // time to complete the game
+    private long timeResult;         // time to complete the game
     private Date createdOn;         // date game was played
     private Date syncedOn;         // date the Player was created
     private long playerId;           // fk of the Player id who played the game
@@ -31,7 +41,7 @@ public class GameResult implements Parcelable {
      * Default constructor
      */
     public GameResult () {
-        this(Values.NO_ID, Values.NO_ID, null, null,Values.NO_ID, Values.NO_ID);
+        this(NO_ID, -1, null, null, NO_ID, NO_ID);
     }
 
     /**
@@ -41,12 +51,14 @@ public class GameResult implements Parcelable {
      * @param playerId
      * @param gameId
      */
-    public GameResult (int timeResult, long playerId, long gameId) {
-        this(Values.NO_ID, timeResult, Calendar.getInstance().getTime(), null, playerId, gameId);
+    public GameResult (long timeResult, long playerId, long gameId) {
+        this(NO_ID, timeResult, Calendar.getInstance().getTime(), null, playerId, gameId);
     }
+
 
     /**
      * Constructor called from the database.
+     *
      * @param id
      * @param timeResult
      * @param createdOn
@@ -54,7 +66,7 @@ public class GameResult implements Parcelable {
      * @param playerId
      * @param gameId
      */
-    public GameResult (long id, int timeResult, Date createdOn, Date syncedOn, long playerId, long gameId) {
+    public GameResult (long id, long timeResult, Date createdOn, Date syncedOn, long playerId, long gameId) {
         this.id = id;
         this.timeResult = timeResult;
         this.createdOn = createdOn;
@@ -63,20 +75,30 @@ public class GameResult implements Parcelable {
         this.gameId = gameId;
     }
 
+    protected GameResult (Parcel in) {
+        id = in.readLong();
+        timeResult = in.readLong();
+        long tmpCreatedOn = in.readLong();
+        createdOn = tmpCreatedOn != -1 ? new Date(tmpCreatedOn) : null;
+        long tmpSyncedOn = in.readLong();
+        syncedOn = tmpSyncedOn != -1 ? new Date(tmpSyncedOn) : null;
+        playerId = in.readLong();
+        gameId = in.readLong();
+    }
 
     public long getId () {
         return id;
     }
 
-    public void setId (int id) {
+    public void setId (long id) {
         this.id = id;
     }
 
-    public int getTimeResult () {
+    public long getTimeResult () {
         return timeResult;
     }
 
-    public void setTimeResult (int timeResult) {
+    public void setTimeResult (long timeResult) {
         this.timeResult = timeResult;
     }
 
@@ -124,27 +146,15 @@ public class GameResult implements Parcelable {
 
     }
 
-
     @Override
-    public int hashCode() {
+    public int hashCode () {
         int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + timeResult;
+        result = 31 * result + (int) (timeResult ^ (timeResult >>> 32));
         result = 31 * result + (createdOn != null ? createdOn.hashCode() : 0);
         result = 31 * result + (syncedOn != null ? syncedOn.hashCode() : 0);
         result = 31 * result + (int) (playerId ^ (playerId >>> 32));
         result = 31 * result + (int) (gameId ^ (gameId >>> 32));
         return result;
-    }
-
-    protected GameResult(Parcel in) {
-        id = in.readLong();
-        timeResult = in.readInt();
-        long tmpCreatedOn = in.readLong();
-        createdOn = tmpCreatedOn != -1 ? new Date(tmpCreatedOn) : null;
-        long tmpSyncedOn = in.readLong();
-        syncedOn = tmpSyncedOn != -1 ? new Date(tmpSyncedOn) : null;
-        playerId = in.readLong();
-        gameId = in.readLong();
     }
 
     @Override
@@ -160,31 +170,18 @@ public class GameResult implements Parcelable {
     }
 
     @Override
-    public int describeContents() {
+    public int describeContents () {
         return 0;
     }
 
     @Override
-    public void writeToParcel(Parcel dest, int flags) {
+    public void writeToParcel (Parcel dest, int flags) {
         dest.writeLong(id);
-        dest.writeInt(timeResult);
+        dest.writeLong(timeResult);
         dest.writeLong(createdOn != null ? createdOn.getTime() : -1L);
         dest.writeLong(syncedOn != null ? syncedOn.getTime() : -1L);
         dest.writeLong(playerId);
         dest.writeLong(gameId);
     }
-
-    @SuppressWarnings("unused")
-    public static final Parcelable.Creator<GameResult> CREATOR = new Parcelable.Creator<GameResult>() {
-        @Override
-        public GameResult createFromParcel(Parcel in) {
-            return new GameResult(in);
-        }
-
-        @Override
-        public GameResult[] newArray(int size) {
-            return new GameResult[size];
-        }
-    };
 
 }
