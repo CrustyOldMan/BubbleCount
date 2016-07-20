@@ -12,7 +12,6 @@ import java.util.Random;
  */
 public final class Values {
 
-    public final static int NO_ID = -1;         // placeholder
     public static final Random RANDOM = new Random();
 
     private Values (){}
