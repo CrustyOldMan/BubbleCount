@@ -43,6 +43,34 @@ public interface Sprite {
     void setY (float y);
 
     /**
+     * Gets the Y speed of the sprite
+     *
+     * @return the Y direction speed
+     */
+    float getYSpeed ();
+
+    /**
+     * Sets the Y speed of the sprite
+     *
+     * @param x the Y direction speed
+     */
+    void setYSpeed (float x);
+
+    /**
+     * Gets the X speed of the sprite
+     *
+     * @return the X direction speed
+     */
+    float getXSpeed ();
+
+    /**
+     * Sets the X speed of the sprite
+     *
+     * @param x the X direction speed
+     */
+    void setXSpeed (float x);
+
+    /**
      * Gets the radius of the Sprite
      *
      * @return radius
@@ -73,13 +101,14 @@ public interface Sprite {
     /**
      * Gets the visibility state of the Sprite
      */
-    boolean getVisibility();
+    boolean getVisibility ();
 
     /**
      * Sets the visibility of the Sprite
+     *
      * @param isVisible
      */
-    void setVisibility(boolean isVisible);
+    void setVisibility (boolean isVisible);
 
     /**
      * Checks to see if the Sprite has collided with another Sprite object
@@ -124,7 +153,7 @@ public interface Sprite {
      *
      * @param spriteImage the Bitmap of the sprite
      */
-    void setSpriteImage (Bitmap spriteImage);
+    void setSpriteImage (SpriteImage spriteImage);
 
     /**
      * Updates the Sprite, such as with motion. Usually called prior to a draw event.
@@ -132,6 +161,16 @@ public interface Sprite {
      * @return true if the sprite has expired
      */
     boolean update ();
+
+    /**
+     * Animates the Sprite
+     */
+    void animate ();
+
+    /**
+     * Defines what happens to this sprite is touched
+     */
+    void touched (Sprite sprite);
 
     /**
      * Draws the sprite if the sprite is visible

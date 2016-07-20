@@ -10,13 +10,7 @@
     <string name="main_toggle_music_on">Music On</string>
     <string name="main_toggle_music_off">Music Off</string>
 
-    <!-- Strings related to the Settings Activity -->
-    <string name="title_activity_settings">Parental Controls</string>
+    <!-- Strings related to the PlayerDialogFragment -->
     <string name="player_dialog_name_hint">Player Name</string>
-
-    <!-- Strings related to the Game Activity -->
-    <string name="notify_level_start">Level $1%d</string>
-    <string name="notify_game_start">Go!</string>
-    <string name="notify_game_end">Great Job!</string>
 
 </resources>

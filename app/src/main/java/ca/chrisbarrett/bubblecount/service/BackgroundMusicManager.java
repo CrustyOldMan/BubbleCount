@@ -72,7 +72,7 @@ public class BackgroundMusicManager {
         }
 
         if (mediaPlayer == null) {
-            Log.d(TAG, "Initializing the BackgroundMusicManager");
+            Log.i(TAG, "Initializing the BackgroundMusicManager");
             musicThread = new Thread(new Runnable() {
                 @Override
                 public void run () {

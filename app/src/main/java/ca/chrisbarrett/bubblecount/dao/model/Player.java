@@ -6,8 +6,6 @@ import android.os.Parcelable;
 import java.util.Calendar;
 import java.util.Date;
 
-import ca.chrisbarrett.bubblecount.util.Values;
-
 /**
  * POJO to hold a Player object, consisting of the primary key for the database (or NO_ID if not yet
  * assigned, the name of the Player for display purposes, the yearOfBirth (used with the minimumAge
@@ -20,6 +18,8 @@ import ca.chrisbarrett.bubblecount.util.Values;
 
 public class Player  implements Parcelable {
 
+    public static final long NO_ID = -1;
+
     private long id;                 // pk of the player
     private String name;            // name of the player
     private int yearOfBirth;        // year of birth of the player
@@ -31,7 +31,7 @@ public class Player  implements Parcelable {
      * Default constructor. Date will be null.
      */
     public Player () {
-        this(Values.NO_ID, null, Values.NO_ID, null, null);
+        this( NO_ID, null,  -1, null, null);
     }
 
     /**
@@ -41,7 +41,7 @@ public class Player  implements Parcelable {
      * @param yearOfBirth
      */
     public Player (String name, int yearOfBirth) {
-        this(Values.NO_ID, name, yearOfBirth, Calendar.getInstance().getTime(), null);
+        this( NO_ID, name, yearOfBirth, Calendar.getInstance().getTime(), null);
     }
 
     /**

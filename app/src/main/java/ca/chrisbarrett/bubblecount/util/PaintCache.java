@@ -13,9 +13,9 @@ import android.graphics.Paint;
  */
 public final class PaintCache {
 
-    public static final int DEFAULT_COLOR = Color.WHITE;
+    public static final int DEFAULT_COLOR = Color.BLACK;
     public static final int DEFAULT_LINE_THICKNESS = 2;
-    public static final int DEFAULT_TEXT_SIZE = 100;
+    public static final int DEFAULT_TEXT_SIZE = 120;
 
     private static Paint textPaint;
     private static Paint drawPaint;
@@ -50,9 +50,6 @@ public final class PaintCache {
     public static Paint getDrawablePainter () {
         if (drawPaint == null) {
             drawPaint = new Paint();
-            drawPaint.setColor(DEFAULT_COLOR);
-            drawPaint.setStyle(Paint.Style.STROKE);
-            drawPaint.setStrokeWidth(DEFAULT_LINE_THICKNESS);
         }
         return drawPaint;
     }

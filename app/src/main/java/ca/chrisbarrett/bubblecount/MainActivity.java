@@ -2,19 +2,20 @@ package ca.chrisbarrett.bubblecount;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ToggleButton;
 
-import java.util.Map;
+import java.util.Arrays;
 
-import ca.chrisbarrett.bubblecount.dao.AppDatabaseHelper;
+import ca.chrisbarrett.bubblecount.dao.Database;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
+import ca.chrisbarrett.bubblecount.util.GlobalContext;
 import ca.chrisbarrett.bubblecount.util.Values;
 
 /**
@@ -37,61 +38,82 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final BackgroundMusicManager MUSIC_MANAGER = BackgroundMusicManager.getInstance();
     private static boolean isContinueMusic;
+
+    private Database db;
     private ToggleButton toggleMusic;
     private boolean isMusicToggleAvailable;
     private boolean isMusicOn;
-    private int gameSelector;
+    private long gameId;
+    private long playerId;
+    private AdapterView.OnItemClickListener dialogListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
+
+        }
+    };
 
     //
     // LifeCycles Events Begin Here
     //
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate (Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate called.");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
+        GlobalContext gc = GlobalContext.getInstance();
+        gc.initialize(getApplicationContext());
         MUSIC_MANAGER.setOnBackgroundMusicListener(this);
-        Button buttonGamePlay = (Button) findViewById(R.id.button_main_game);
-        if (buttonGamePlay != null) {
-            buttonGamePlay.setOnClickListener(this);
-        }
-        Button buttonSettings = (Button) findViewById(R.id.button_main_settings);
-        if (buttonSettings != null) {
-            buttonSettings.setOnClickListener(this);
-        }
+        ((Button) findViewById(R.id.button_main_game)).setOnClickListener(this);
+        ((Button) findViewById(R.id.button_main_settings)).setOnClickListener(this);
         toggleMusic = (ToggleButton) findViewById(R.id.togglebutton_main_music);
-
-        testSomething();        // TODO - Delete test method when finished
+        checkPreferences();
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume () {
         super.onResume();
         Log.d(TAG, "onResume called.");
         // Loading the music can take time. Do this as soon as you can.
         MUSIC_MANAGER.initialize(this, R.raw.background);
-        loadRelevantPreferences();
+        db = new Database(this).open();
+        getPreferences();
         if (isMusicToggleAvailable) {
+            Log.d(TAG, "Music Toggle is set to on.");
             toggleMusic.setChecked(isMusicOn);
             toggleMusic.setOnClickListener(this);
             toggleMusic.setVisibility(View.VISIBLE);
         } else {
+            Log.d(TAG, "Music Toggle is set to off.");
             toggleMusic.setVisibility(View.GONE);
         }
         isContinueMusic = false;
     }
 
     @Override
-    protected void onPause() {
+    protected void onPause () {
         super.onPause();
+        Log.d(TAG, "onPause called.");
         if (!isContinueMusic) {
-            Log.d(TAG, "onPause called and releasing MUSIC_MANAGER.");
+            Log.d(TAG, "Releasing MUSIC_MANAGER.");
             MUSIC_MANAGER.musicRelease();
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onDestroy () {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy called.");
+        db.close();
+    }
+
+    @Override
+    protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, String.format("onActivityResult called: request: %d, result: %d", requestCode, resultCode));
         switch (requestCode) {
             case Values.ResultRequest.ACTIVITY_SETTINGS:
                 Log.d(TAG, "Back from SettingsActivity");
@@ -134,13 +156,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * @param v
      */
     @Override
-    public void onClick(View v) {
+    public void onClick (View v) {
         Intent intent = null;
         switch (v.getId()) {
             case R.id.button_main_game:
                 Log.d(TAG, "GameFeed Button pressed");
                 intent = new Intent(this, GameActivity.class);
-                intent.putExtra(Values.Extra.GAME_SELECTOR, gameSelector);
+                intent.putExtra(Values.Extra.GAME_ID_SELECTOR, gameId);
+                intent.putExtra(Values.Extra.PLAYER_ID_SELECTOR, playerId);
                 isContinueMusic = true;
                 startActivityForResult(intent, Values.ResultRequest.ACTIVITY_GAME);
                 break;
@@ -167,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * Starts the music when the MUSIC_MANAGER advises the music is ready
      */
     @Override
-    public void onMusicReady() {
+    public void onMusicReady () {
         Log.d(TAG, "Notified by BackgroundMusicManager music is ready.");
         if (isMusicOn && !MUSIC_MANAGER.isPlaying()) {
             Log.d(TAG, "Calling for music to start.");
@@ -175,48 +198,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     //
     // Helper methods begin here
     //
 
+    /**
+     * This method starts the GameActivity
+     *
+     * @param intent
+     */
+    protected void startGameActivity (Intent intent) {
+
+
+    }
 
     /**
      * This method updates the preference for isMusicOn
      */
-    protected void saveMusicOnPreference() {
+    protected void saveMusicOnPreference () {
+        Log.d(TAG, String.format("saveMusicOnPreference - saving MusicOn to: %b.", isMusicOn));
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor prefEditor = sharedPref.edit();
         prefEditor.putBoolean(getString(R.string.pref_music_is_on_key), isMusicOn).apply();
-        Log.d(TAG, String.format("Saved Preference for MusicOn to: %b",
-                sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), false)));
     }
 
     /**
-     * This method loads the preferences relevant to this task.
+     * This method loads the preferences needed for this Activity
      */
-    protected void loadRelevantPreferences() {
+    protected void getPreferences () {
+        Log.d(TAG, "getPreferences called.");
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isMusicToggleDefault = getResources().getBoolean(R.bool.pref_music_toggle_available_default);
-        isMusicToggleAvailable = sharedPref.getBoolean(getString(R.string.pref_music_toggle_available_key),
-                isMusicToggleDefault);
-        isMusicOn = sharedPref.getBoolean(getString(R.string.pref_music_is_on_key), isMusicToggleAvailable);
-
-        int gameSelectorDefault = getResources().getInteger(R.integer.pref_game_selector_default);
-        gameSelector = sharedPref.getInt(getString(R.string.pref_game_selector_summary), gameSelectorDefault);
+        isMusicToggleAvailable = sharedPref.getBoolean(
+                getString(R.string.pref_music_toggle_available_key),
+                getResources().getBoolean(R.bool.pref_music_toggle_available_default));
+        isMusicOn = sharedPref.getBoolean(
+                getString(R.string.pref_music_is_on_key), isMusicToggleAvailable);
+        gameId = Long.valueOf(
+                sharedPref.getString(getString(R.string.pref_game_selector_key),
+                        String.valueOf(getResources().getInteger(R.integer.pref_game_selector_default_value))));
+        playerId = Long.valueOf(
+                sharedPref.getString(getString(R.string.pref_player_selector_key),
+                        String.valueOf(getResources().getInteger(R.integer.pref_player_selector_default_value))));
     }
 
 
-    // TODO - Delete test method when finished
-    void testSomething() {
-        AppDatabaseHelper dbHelper = new AppDatabaseHelper(this);
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Log.d(TAG, "Games: " + dbHelper.getAllGames(db));
-        Log.d(TAG,"Players: " + dbHelper.getAllPlayers(db));
-        Log.d(TAG, "GameResults: " + dbHelper.getAllGameResults(db));
-        db.close();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        for(Map.Entry<String,?> entry : sharedPreferences.getAll().entrySet()){
-            Log.d(TAG, entry.getKey()+" : "+entry.getValue());
-        }
+    // Sanity check to make sure preferences are saving
+    private void checkPreferences(){
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        Log.d(TAG, Arrays.toString(sharedPref.getAll().entrySet().toArray()));
     }
 }

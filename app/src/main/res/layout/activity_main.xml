@@ -1,50 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/colorBackground"
-    android:orientation="vertical"
-    tools:context="ca.chrisbarrett.bubblecount.MainActivity">
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@color/primaryBackground"
+              android:orientation="vertical"
+              tools:context="ca.chrisbarrett.bubblecount.MainActivity">
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"/>
 
     <ca.chrisbarrett.bubblecount.view.BubbleButton
         android:id="@+id/button_main_game"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/main_button_game"
-        android:textSize="@dimen/abc_text_size_display_4_material" />
+        android:textColor="@color/title"
+        android:textSize="@dimen/abc_text_size_display_4_material"/>
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"/>
 
     <ca.chrisbarrett.bubblecount.view.BubbleButton
         android:id="@+id/button_main_settings"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/main_button_settings"
-        android:textSize="@dimen/abc_text_size_display_3_material" />
+        android:textColor="@color/accent"
+        android:textSize="@dimen/abc_text_size_display_3_material"/>
 
     <android.support.v4.widget.Space
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_weight="2" />
+        android:layout_weight="2"/>
 
     <ToggleButton
         android:id="@+id/togglebutton_main_music"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="right"
-        android:background="@drawable/toggle_music"
-        android:textOff=""
-        android:textOn=""
-        android:layout_marginRight="@dimen/activity_horizontal_margin"
         android:layout_marginBottom="@dimen/activity_vertical_margin"
-        />
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:background="@drawable/toggle_music"
+        android:textOff="@null"
+        android:textOn="@null" />
 </LinearLayout>

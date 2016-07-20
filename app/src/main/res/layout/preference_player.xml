@@ -13,9 +13,10 @@
         android:layout_height="wrap_content"
         android:hint="@string/player_dialog_name_hint"/>
 
-    <NumberPicker
+
+    <ca.chrisbarrett.bubblecount.preference.YearPicker
         android:id="@+id/player_year_picker"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"></NumberPicker>
+        android:layout_height="wrap_content"></ca.chrisbarrett.bubblecount.preference.YearPicker>
 
 </LinearLayout>

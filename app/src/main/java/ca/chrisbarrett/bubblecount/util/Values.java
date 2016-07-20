@@ -12,7 +12,6 @@ import java.util.Random;
  */
 public final class Values {
 
-    public final static int NO_ID = -1;         // placeholder
     public static final Random RANDOM = new Random();
 
     private Values (){}
@@ -21,8 +20,8 @@ public final class Values {
      * Contains tags used during Extras
      */
     public static abstract class  Extra {
-        public static final String GAME_SELECTOR = "GAME_SELECTOR";
-
+        public static final String GAME_ID_SELECTOR = "GAME_ID_SELECTOR";
+        public static final String PLAYER_ID_SELECTOR = "PLAYER_ID_SELECTOR";
 
     }
 
