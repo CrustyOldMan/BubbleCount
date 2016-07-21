@@ -2,7 +2,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        android:title="@string/pref_cat_sound_controls"/>
+        android:persistent="false"
+        android:key="@string/pref_cat_sound_controls_key"
+        android:title="@string/pref_cat_sound_controls_title"/>
 
     <CheckBoxPreference
         android:persistent="true"
@@ -19,20 +21,26 @@
         android:title="@string/pref_music_toggle_available_title"/>
 
     <PreferenceCategory
-        android:title="@string/pref_cat_parental_access_controls"/>
+        android:persistent="false"
+        android:key="@string/pref_cat_parental_access_controls_key"
+        android:title="@string/pref_cat_parental_access_controls_title"/>
 
     <Preference
         android:persistent="true"
-        android:defaultValue="@integer/pref_game_selector_default_value"
+        android:defaultValue="@string/pref_game_selector_default_value"
         android:key="@string/pref_game_selector_key"
         android:title="@string/pref_game_selector_title"/>
 
     <PreferenceScreen
-        android:summary="@string/pref_cat_player_management_summary"
-        android:title="@string/pref_cat_player_management_controls">
+        android:persistent="false"
+        android:summary="@string/pref_cat_player_management_summary_title"
+        android:key="@string/pref_cat_player_management_summary_key"
+        android:title="@string/pref_cat_player_management_controls_title">
 
         <PreferenceCategory
-            android:title="@string/pref_cat_player_management_controls"/>
+            android:persistent="false"
+            android:key="@string/pref_cat_player_management_controls_key"
+            android:title="@string/pref_cat_player_management_controls_title"/>
 
         <ca.chrisbarrett.bubblecount.preference.PlayerDialogPreference
             android:persistent="false"
@@ -54,7 +62,7 @@
 
         <Preference
             android:persistent="true"
-            android:defaultValue="@integer/pref_player_selector_default_value"
+            android:defaultValue="@string/pref_player_selector_default_value"
             android:key="@string/pref_player_selector_key"
             android:title="@string/pref_player_selector_title"/>
 
