@@ -10,18 +10,20 @@
     <string name="pref_header_data_sync">Data Sync Settings</string>
 
     <!-- Configures global settings -->
-    <string name="pref_cat_parental_access_controls">Access Controls</string>
+    <string name="pref_cat_parental_access_controls_key">access_controls</string>
+    <string name="pref_cat_parental_access_controls_title">Access Controls</string>
     <!-- Configures a default Game -->
     <string name="pref_game_selector_key">game_default</string>
     <string name="pref_game_selector_title">Set A Default Game</string>
-    <integer name="pref_game_selector_default_value">1</integer>
+    <string name="pref_game_selector_default_value">1</string>
     <!-- Configures a default Player -->
     <string name="pref_player_selector_key">player_default</string>
     <string name="pref_player_selector_title">Set A Default Player</string>
-    <integer name="pref_player_selector_default_value">1</integer>
+    <string name="pref_player_selector_default_value">1</string>
 
     <!-- Configures the Sound controls - music off/on and MainActivity music toggle on/off -->
-    <string name="pref_cat_sound_controls">Sound Controls</string>
+    <string name="pref_cat_sound_controls_title">Sound Controls</string>
+    <string name="pref_cat_sound_controls_key">sound_key</string>
     <string name="pref_music_is_on_key">music_on</string>
     <string name="pref_music_is_on_title">Set Music On</string>
     <string name="pref_music_is_on_summary">Globally turn the music off or on</string>
@@ -32,8 +34,10 @@
     <bool name="pref_music_toggle_available_default">true</bool>
 
     <!-- Configures the PlayerFeed CRUD controls -->
-    <string name="pref_cat_player_management_controls">Player Controls</string>
-    <string name="pref_cat_player_management_summary">Create, Edit and Delete Players</string>
+    <string name="pref_cat_player_management_controls_title">Player Controls</string>
+    <string name="pref_cat_player_management_controls_key">player_controls</string>
+    <string name="pref_cat_player_management_summary_title">Create, Edit and Delete Players</string>
+    <string name="pref_cat_player_management_summary_key">player_screen_key</string>
     <string name="pref_player_create_key">player_create</string>
     <string name="pref_player_create_title">Create A Player</string>
     <string name="pref_player_create_summary">Enter a name and year of birth. That\'s it.</string>

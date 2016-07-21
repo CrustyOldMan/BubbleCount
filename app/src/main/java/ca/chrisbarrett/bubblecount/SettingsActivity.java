@@ -18,6 +18,7 @@ import ca.chrisbarrett.bubblecount.dao.Database;
 import ca.chrisbarrett.bubblecount.dao.GameDao;
 import ca.chrisbarrett.bubblecount.dao.PlayerDao;
 import ca.chrisbarrett.bubblecount.dao.model.Game;
+import ca.chrisbarrett.bubblecount.dao.model.Player;
 import ca.chrisbarrett.bubblecount.dialog.ListDialogFragment;
 import ca.chrisbarrett.bubblecount.preference.PlayerDialogPreference;
 import ca.chrisbarrett.bubblecount.service.BackgroundMusicManager;
@@ -32,7 +33,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
     private static final String TAG = "SettingsActivity";
 
     // args used to management ListFragment callbacks
-    private static final String LIST_CALLER_ID = "LIST_CALLER_ID";
+
     private static final int SET_DEFAULT_GAME = 1;
     private static final int SET_DEFAULT_PLAYER = 2;
     private static final int DELETE_PLAYER = 3;
@@ -48,7 +49,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
     private static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange (Preference preference, Object value) {
-            Log.d(TAG, "onPreferenceChange called.");
+            Log.d(TAG, "OnPreferenceChangeListener called.");
 
             String stringValue = value.toString();
             String preferenceKey = preference.getKey();
@@ -64,13 +65,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
 
                 // Set the summary to reflect the new value.
                 preference.setSummary(
-                        index >= 0
-                                ? listPreference.getEntries()[index]
-                                : null);
-
+                        index >= 0 ? listPreference.getEntries()[index] : null);
             }
 
-            // Sets the display value to match the view
+            // Sets the display value to match the User selected Game default
             else if (preferenceKey.equals(context.getString(R.string.pref_game_selector_key))) {
                 Log.d(TAG, "OnPreferenceChangeListener heard change in pref_game_selector_key.");
 
@@ -85,11 +83,29 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
                 }
                 if (game != null) {
                     preference.setSummary(game.getDisplayName());
-
                 }
-            } else {
-                // For all other preferences, set the summary to the value's
-                // simple string representation.
+            }
+
+            // Sets the display value to match the User selected Player default
+            else if (preferenceKey.equals(context.getString(R.string.pref_player_selector_key))) {
+                Log.d(TAG, "OnPreferenceChangeListener heard change in pref_player_selector_key.");
+
+                if (stringValue == null || stringValue.trim().isEmpty()) {
+                    stringValue = "" + 1;
+                }
+                Player player = null;
+                try {
+                    player = db.playerDao.selectPlayerById(Long.valueOf(stringValue));
+                } catch (SQLException  e ) {
+                    Log.e(TAG, e.getMessage());
+                }
+                if (player != null) {
+                    preference.setSummary(player.getName());
+                }
+            }
+
+            // For all other preferences, set the summary to the value's simple string representation.
+            else {
                 preference.setSummary(stringValue);
             }
             return false;
@@ -140,9 +156,30 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
         }
     }
 
+    /**
+     * This callback listener handles the selections from the ListDialogFragment. Based on the callerId
+     * value, different actions will be triggered
+     * @param callerId
+     * @param position
+     * @param id
+     */
     @Override
     public void OnListDialogItemClick (int callerId, int position, long id) {
         Log.d(TAG, String.format("User updated to position %d, id %d using caller: ", position, id, callerId));
+        switch(callerId){
+            case SET_DEFAULT_GAME:
+                Log.d(TAG,"Updating default Game to: "+id);
+                break;
+            case SET_DEFAULT_PLAYER:
+                Log.d(TAG,"Updating default Player to: "+id);
+                break;
+            case DELETE_PLAYER:
+                Log.d(TAG,"Deleting Player: "+id);
+                break;
+            case EDIT_PLAYER:
+                Log.d(TAG,"Editing Player: "+id);
+                break;
+        }
     }
 
     /**
@@ -234,9 +271,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
             addPreferencesFromResource(R.xml.pref_general);
             setHasOptionsMenu(true);
             setUpMusicToggle();
-            setupGameSelector();
-            setupPlayerSelector();
+
+            // Creates the selectors needed
+            setDefaultGameSelector();
+            setDefaultPlayerSelector();
+            setDeletePlayerSelector();
+            setEditPlayerSelector();
+
+            // binds the default Game and default Player selectors to their current values
             bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_game_selector_key)));
+            bindPreferenceSummaryToValue(findPreference(getString(R.string.pref_player_selector_key)));
         }
 
         @Override
@@ -258,7 +302,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
             findPreference(getString(R.string.pref_music_is_on_key))
                     .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                         @Override
-                        public boolean onPreferenceClick (Preference preference) {
+                        public boolean onPreferenceClick(Preference preference) {
                             if (MUSIC_MANAGER.isReady()) {
                                 if (MUSIC_MANAGER.isPlaying()) {
                                     MUSIC_MANAGER.musicPause();
@@ -272,9 +316,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
         }
 
         /**
-         * This method setups the game selector toggle so clicking will open a ListDialog of Games
+         * This method setups the Game selector toggle so clicking will open a ListDialog of Games
          */
-        protected void setupGameSelector () {
+        protected void setDefaultGameSelector() {
             findPreference(getString(R.string.pref_game_selector_key))
                     .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                         @Override
@@ -290,7 +334,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
                             ListDialogFragment listFragment = new ListDialogFragment();
                             listFragment.setCursor(db.gameDao.getCursorForAdapter(GameDao.ALL_ENTRIES));
                             Bundle args = new Bundle();
-                            args.putInt(LIST_CALLER_ID, SET_DEFAULT_GAME);
+                            args.putInt(ListDialogFragment.LIST_CALLER_ID, SET_DEFAULT_GAME);
                             listFragment.setArguments(args);
                             listFragment.show(ft, "pref_game_selector_key");
                             return false;
@@ -299,9 +343,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
         }
 
         /**
-         * This method setups the game selector toggle so clicking will open a ListDialog of Games
+         * This method setups the Player selector toggle so clicking will open a ListDialog of Players
          */
-        protected void setupPlayerSelector () {
+        protected void setDefaultPlayerSelector() {
             findPreference(getString(R.string.pref_player_selector_key))
                     .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                         @Override
@@ -317,7 +361,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
                             ListDialogFragment listFragment = new ListDialogFragment();
                             listFragment.setCursor(db.playerDao.getCursorForAdapter(PlayerDao.ALL_ENTRIES));
                             Bundle args = new Bundle();
-                            args.putInt(LIST_CALLER_ID, SET_DEFAULT_PLAYER);
+                            args.putInt(ListDialogFragment.LIST_CALLER_ID, SET_DEFAULT_PLAYER);
                             listFragment.setArguments(args);
                             listFragment.show(ft, "pref_player_selector_key");
                             return false;
@@ -325,53 +369,64 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements
                     });
         }
 
+        /**
+         * This method setups the Player edit toggle so clicking will open a ListDialog of User
+         * created Players. If there are no User created Players available for deletion, User will
+         * be advised.
+         */
+        protected void setEditPlayerSelector () {
+            findPreference(getString(R.string.pref_player_edit_key))
+                    .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                        @Override
+                        public boolean onPreferenceClick (Preference preference) {
+                            FragmentTransaction ft = getFragmentManager().beginTransaction();
+                            Fragment prev = getFragmentManager().findFragmentByTag("pref_player_edit_key");
+                            if (prev != null) {
+                                ft.remove(prev);
+                            }
+                            ft.addToBackStack(null);
+
+                            // Create and show the dialog.
+                            ListDialogFragment listFragment = new ListDialogFragment();
+                            listFragment.setCursor(db.playerDao.getCursorForAdapter(PlayerDao.USER_ENTRIES));
+                            Bundle args = new Bundle();
+                            args.putInt(ListDialogFragment.LIST_CALLER_ID, DELETE_PLAYER);
+                            listFragment.setArguments(args);
+                            listFragment.show(ft, "pref_player_selector_key");
+                            return false;
+                        }
+                    });
+        }
+
+        /**
+         * This method setups the Player delete toggle so clicking will open a ListDialog of User
+         * created Players. If there are no User created Players available for deletion, User will
+         * be advised.
+         */
+        protected void setDeletePlayerSelector () {
+            findPreference(getString(R.string.pref_player_delete_key))
+                    .setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                        @Override
+                        public boolean onPreferenceClick (Preference preference) {
+                            FragmentTransaction ft = getFragmentManager().beginTransaction();
+                            Fragment prev = getFragmentManager().findFragmentByTag("pref_player_delete_key");
+                            if (prev != null) {
+                                ft.remove(prev);
+                            }
+                            ft.addToBackStack(null);
+
+                            // Create and show the dialog.
+                            ListDialogFragment listFragment = new ListDialogFragment();
+                            listFragment.setCursor(db.playerDao.getCursorForAdapter(PlayerDao.USER_ENTRIES));
+                            Bundle args = new Bundle();
+                            args.putInt(ListDialogFragment.LIST_CALLER_ID, DELETE_PLAYER);
+                            listFragment.setArguments(args);
+                            listFragment.show(ft, "pref_player_selector_key");
+                            return false;
+                        }
+                    });
+        }
     }
 
-
-    /**
-     * This fragment shows Data sync settings, such as sign in registration and timing
-     */
-    public static class SyncPreferenceFragment extends PreferenceFragment {
-
-        @Override
-        public void onCreate (Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            Log.i(TAG, "Calling SyncPreferenceFragment");
-            addPreferencesFromResource(R.xml.pref_sync);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected (MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
-    }
-
-    /**
-     * This fragment shows Player settings, such as create, delete, edit
-     */
-    public static class PlayerPreferenceFragment extends PreferenceFragment {
-
-        @Override
-        public void onCreate (Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            Log.i(TAG, "Calling PlayerPreferenceFragment");
-            addPreferencesFromResource(R.xml.pref_player);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected (MenuItem item) {
-            int id = item.getItemId();
-            if (id == android.R.id.home) {
-                startActivity(new Intent(getActivity(), SettingsActivity.class));
-                return true;
-            }
-            return super.onOptionsItemSelected(item);
-        }
-    }
 }
 
